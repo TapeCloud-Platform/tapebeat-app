@@ -1,7 +1,16 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+} from 'react-router-dom';
 import AppHeader from './components/AppHeader';
 import CategoryDrawer from './components/CategoryDrawer';
-import MovieModal from './components/MovieModal';
+import CatalogPage from './components/CatalogPage';
+import TrackDetailPage from './components/TrackDetailPage';
+import ArtistPage from './components/ArtistPage';
 import { discover, getFilters } from './discoverApi';
 
 const SOURCE_APP = 'tapebeat';
@@ -41,59 +50,56 @@ function getSessionUser() {
   };
 }
 
-export default function App() {
+/** El header y el drawer viven fuera de las rutas para no desaparecer en el detalle. */
+function AppShell({ sessionUser, onLogout }) {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState([]);
   const [active, setActive] = useState({ type: 'top', value: '' });
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [sessionUser, setSessionUser] = useState(null);
-  const [selectedItem, setSelectedItem] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    consumeSsoParams();
-    setSessionUser(getSessionUser());
     getFilters(SOURCE_APP).then(setFilters).catch(() => setFilters([]));
   }, []);
 
-  const loadItems = useCallback(async (filter) => {
-    try {
-      setLoading(true);
-      setError('');
-      const data = await discover(SOURCE_APP, { ...filter, limit: RESULT_LIMIT });
-      setItems(data || []);
-    } catch (err) {
-      setError(err.message || 'No se pudo cargar el contenido.');
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    loadItems(active);
-  }, [active, loadItems]);
+    let cancelled = false;
 
-  function handleSearch(query) {
-    setActive({ type: 'search', value: query });
-  }
+    async function load() {
+      try {
+        setLoading(true);
+        setError('');
+        const data = await discover(SOURCE_APP, { ...active, limit: RESULT_LIMIT });
+        if (!cancelled) {
+          setItems(data || []);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err.message || 'No se pudo cargar el contenido.');
+          setItems([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
 
-  function handleLogout() {
-    localStorage.removeItem('tapecloud_token');
-    localStorage.removeItem('tapecloud_email');
-    localStorage.removeItem('tapecloud_display_name');
-    setSessionUser(null);
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [active]);
+
+  // Filtrar desde el detalle debe devolver al catálogo para ver los resultados.
+  function applyFilter(filter) {
+    setActive(filter);
+    navigate('/catalog');
   }
 
   const activeFilter = filters.find((filter) => filter.type === active.type);
-  const isFiltered = active.type !== 'top';
-  const activeLabel = activeFilter?.options?.find((option) => option.value === active.value)?.label
-    ?? active.value;
-
-  function clearFilters() {
-    setActive({ type: 'top', value: '' });
-  }
 
   return (
     <div className="app-shell">
@@ -102,73 +108,60 @@ export default function App() {
         tagline="Música y charts"
         portalUrl={PORTAL_URL}
         sessionUser={sessionUser}
-        onLogout={handleLogout}
-        onSearch={handleSearch}
+        onLogout={onLogout}
+        onSearch={(query) => applyFilter({ type: 'search', value: query })}
         onOpenMenu={() => setMenuOpen(true)}
-        onHome={clearFilters}
+        onHome={() => applyFilter({ type: 'top', value: '' })}
       />
 
       <CategoryDrawer
         open={menuOpen}
         filters={filters}
         active={active}
-        onApply={setActive}
+        onApply={applyFilter}
         onClose={() => setMenuOpen(false)}
       />
 
-      <main className="app-main">
-        <section className="section-block">
-          <div className="section-header">
-            <h2>{activeFilter?.label ?? 'Contenido'}</h2>
-            {!loading && <span className="count-badge">{items.length} resultados</span>}
-
-            {isFiltered && (
-              <button type="button" className="active-filter-chip" onClick={clearFilters}>
-                {activeLabel}
-                <span aria-hidden="true">✕</span>
-              </button>
-            )}
-          </div>
-
-          {error && <p className="error">{error}</p>}
-
-          {loading ? (
-            <p className="loading-text">Cargando...</p>
-          ) : (
-            <div className="cards-grid">
-              {items.map((item) => (
-                <article
-                  key={item.externalId}
-                  className="movie-card"
-                  onClick={() => setSelectedItem(item)}
-                >
-                  <div className="poster-container">
-                    {item.imageUrl ? (
-                      <img className="poster-image" src={item.imageUrl} alt={item.title} />
-                    ) : (
-                      <div className="poster">{item.title?.[0] || '?'}</div>
-                    )}
-                    {item.genre && <span className="genre-badge">{item.genre.split(',')[0]}</span>}
-                  </div>
-                  <h3>{item.title}</h3>
-                  <p className="movie-description">{item.description}</p>
-                  <div className="movie-footer">
-                    <small>{item.subtitle}</small>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
-      </main>
-
-      {selectedItem && (
-        <MovieModal
-          movie={{ ...selectedItem, id: selectedItem.externalId }}
-          sessionUser={sessionUser}
-          onClose={() => setSelectedItem(null)}
+      <Routes>
+        <Route
+          path="/catalog"
+          element={
+            <CatalogPage
+              items={items}
+              loading={loading}
+              error={error}
+              activeFilter={activeFilter}
+              active={active}
+              onClearFilters={() => applyFilter({ type: 'top', value: '' })}
+            />
+          }
         />
-      )}
+        <Route path="/track/:trackId" element={<TrackDetailPage sessionUser={sessionUser} />} />
+        <Route path="/artist/:artistName" element={<ArtistPage />} />
+        <Route path="/" element={<Navigate to="/catalog" replace />} />
+      </Routes>
     </div>
+  );
+}
+
+export default function App() {
+  const [sessionUser, setSessionUser] = useState(null);
+
+  useEffect(() => {
+    consumeSsoParams();
+    setSessionUser(getSessionUser());
+  }, []);
+
+  function handleLogout() {
+    localStorage.removeItem('tapecloud_token');
+    localStorage.removeItem('tapecloud_email');
+    localStorage.removeItem('tapecloud_display_name');
+    setSessionUser(null);
+  }
+
+  return (
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <AppShell sessionUser={sessionUser} onLogout={handleLogout} />
+    </Router>
   );
 }

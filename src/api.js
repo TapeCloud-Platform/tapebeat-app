@@ -24,6 +24,46 @@ export async function getMovies() {
   return request('/api/content?sourceApp=tapebeat');
 }
 
+export async function findContentByExternalId(externalId) {
+  const response = await fetch(
+    `${API_URL}/api/content/lookup?sourceApp=tapebeat&sourceType=track&externalId=${encodeURIComponent(externalId)}`
+  );
+  if (response.status === 204) {
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error('No se pudo buscar la canción.');
+  }
+  return response.json();
+}
+
+/** Los temas del descubrimiento llegan de Last.fm en vivo; hay que registrarlos para poder reseñarlos. */
+export async function registerContent(token, track) {
+  const response = await fetch(`${API_URL}/api/content`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      sourceApp: 'tapebeat',
+      sourceType: 'track',
+      externalId: String(track.externalId ?? track.id),
+      title: track.title,
+      description: track.description || '',
+      imageUrl: track.imageUrl || '',
+      releaseDate: null,
+      genre: track.genre || 'General',
+    }),
+  });
+
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(body.message || 'No se pudo registrar la canción.');
+  }
+  return body;
+}
+
 export async function getReviews(contentId) {
   const token = localStorage.getItem('tapecloud_token');
   const headers = { 'Content-Type': 'application/json' };
