@@ -21,3 +21,12 @@ export async function discover(sourceApp, { type = 'top', value = '', limit = 30
   }
   return response.json();
 }
+
+export async function getProfile(sourceApp, name) {
+  const params = new URLSearchParams({ value: name });
+  const response = await fetch(`${API_URL}/api/discover/${sourceApp}/profile?${params}`);
+  if (!response.ok) {
+    return null;
+  }
+  return response.json();
+}
