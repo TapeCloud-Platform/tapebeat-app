@@ -1,19 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { discover, getProfile } from '../discoverApi';
-
-const NUMBER_FORMAT = new Intl.NumberFormat('es-AR');
+import { formatCompactNumber } from '../utils/format';
 
 const TABS = [
   { value: 'album', label: 'Álbumes' },
   { value: 'single', label: 'Singles y EPs' },
   { value: 'other', label: 'Compilados y directos' },
 ];
-
-function formatCount(value) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? NUMBER_FORMAT.format(parsed) : value;
-}
 
 export default function ArtistPage() {
   const { artistName } = useParams();
@@ -89,10 +83,10 @@ export default function ArtistPage() {
           {profile && (
             <div className="artist-stats">
               <span>
-                <strong>{formatCount(profile.listeners)}</strong> oyentes
+                <strong>{formatCompactNumber(profile.listeners)}</strong> oyentes
               </span>
               <span>
-                <strong>{formatCount(profile.playcount)}</strong> reproducciones
+                <strong>{formatCompactNumber(profile.playcount)}</strong> reproducciones
               </span>
             </div>
           )}

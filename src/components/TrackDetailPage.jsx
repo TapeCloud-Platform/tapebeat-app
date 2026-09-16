@@ -11,6 +11,10 @@ import {
   createComment,
   deleteComment,
 } from '../api';
+import { getTrackDetail } from '../discoverApi';
+import { abbreviateNumbersInText } from '../utils/format';
+
+const SOURCE_APP = 'tapebeat';
 
 export default function TrackDetailPage({ sessionUser }) {
   const { trackId } = useParams();
@@ -19,6 +23,7 @@ export default function TrackDetailPage({ sessionUser }) {
 
   const [track, setTrack] = useState(location.state?.track || null);
   const [contentId, setContentId] = useState(null);
+  const [albumDetail, setAlbumDetail] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [commentsByReview, setCommentsByReview] = useState({});
   const [openCommentsFor, setOpenCommentsFor] = useState(null);
@@ -65,6 +70,24 @@ export default function TrackDetailPage({ sessionUser }) {
       cancelled = true;
     };
   }, [trackId, track, loadReviews]);
+
+  useEffect(() => {
+    const artist = track?.subtitle || track?.genre;
+    if (!track?.title || !artist) {
+      return;
+    }
+
+    let cancelled = false;
+    getTrackDetail(SOURCE_APP, artist, track.title).then((detail) => {
+      if (!cancelled) {
+        setAlbumDetail(detail);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [track]);
 
   async function handleSubmitReview(event) {
     event.preventDefault();
@@ -187,7 +210,7 @@ export default function TrackDetailPage({ sessionUser }) {
   const artist = track.subtitle || track.genre;
   // La descripción trae Artista, N oyentes, N reproducciones
   const plays = track.description?.includes('·')
-    ? track.description.split('·').slice(1).join(' · ').trim()
+    ? abbreviateNumbersInText(track.description.split('·').slice(1).join(' · ').trim())
     : null;
 
   return (
@@ -231,9 +254,36 @@ export default function TrackDetailPage({ sessionUser }) {
                 </span>
               )}
               {plays && <span className="stat-pill">{plays}</span>}
+              {albumDetail?.albumName && (
+                <span className="stat-pill">💿 {albumDetail.albumName}</span>
+              )}
             </div>
           </div>
         </div>
+
+        {albumDetail?.albumName && (
+          <div className="album-section">
+            <h2>Del álbum</h2>
+            <div className="track-album-card">
+              {albumDetail.albumImageUrl && (
+                <img
+                  className="track-album-card__cover"
+                  src={albumDetail.albumImageUrl}
+                  alt={albumDetail.albumName}
+                />
+              )}
+              <div className="track-album-card__info">
+                <h3>{albumDetail.albumName}</h3>
+                {albumDetail.albumTrackCount > 0 && (
+                  <p className="track-album-card__meta">{albumDetail.albumTrackCount} canciones</p>
+                )}
+                <p className="track-album-card__description">
+                  {albumDetail.albumDescription || 'Todavía no hay una descripción de este álbum.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="detail-reviews-section">
           <h2>Reseñas y comentarios</h2>

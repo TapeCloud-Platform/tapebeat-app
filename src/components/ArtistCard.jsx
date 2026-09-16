@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { Card, Avatar } from '@heroui/react';
 
 export default function ArtistCard({ artist }) {
   const navigate = useNavigate();
@@ -8,22 +9,20 @@ export default function ArtistCard({ artist }) {
   }
 
   return (
-    <article
+    <Card
+      variant="transparent"
       className="artist-card"
       onClick={open}
       role="button"
-      tabIndex="0"
+      tabIndex={0}
       onKeyDown={(event) => event.key === 'Enter' && open()}
     >
-      <div className="artist-avatar">
-        {artist.imageUrl ? (
-          <img src={artist.imageUrl} alt={artist.title} />
-        ) : (
-          <span>{artist.title?.[0] || '♪'}</span>
-        )}
-      </div>
+      <Avatar size="lg" className="artist-avatar">
+        {artist.imageUrl && <Avatar.Image src={artist.imageUrl} alt={artist.title} />}
+        <Avatar.Fallback>{artist.title?.[0] || '♪'}</Avatar.Fallback>
+      </Avatar>
       <h3>{artist.title}</h3>
       <small>{artist.description}</small>
-    </article>
+    </Card>
   );
 }

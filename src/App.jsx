@@ -15,7 +15,7 @@ import { discover, getFilters } from './discoverApi';
 
 const SOURCE_APP = 'tapebeat';
 const PORTAL_URL = 'http://localhost:5173';
-const RESULT_LIMIT = 30;
+const RESULT_LIMIT = 40;
 
 function consumeSsoParams() {
   const params = new URLSearchParams(window.location.search);
@@ -55,6 +55,7 @@ function AppShell({ sessionUser, onLogout }) {
   const navigate = useNavigate();
   const [filters, setFilters] = useState([]);
   const [active, setActive] = useState({ type: 'top', value: '' });
+  const [sortBy, setSortBy] = useState('relevance');
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -132,7 +133,11 @@ function AppShell({ sessionUser, onLogout }) {
               error={error}
               activeFilter={activeFilter}
               active={active}
+              filters={filters}
+              onApplyFilter={applyFilter}
               onClearFilters={() => applyFilter({ type: 'top', value: '' })}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
             />
           }
         />
