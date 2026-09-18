@@ -62,21 +62,21 @@ export async function resendVerificationCode(email) {
   return postJson('/api/auth/resend-code', { email });
 }
 
-export async function findContentByExternalId(externalId) {
+export async function findContentByExternalId(externalId, sourceType = 'track') {
   const response = await fetch(
-    `${API_URL}/api/content/lookup?sourceApp=tapebeat&sourceType=track&externalId=${encodeURIComponent(externalId)}`
+    `${API_URL}/api/content/lookup?sourceApp=tapebeat&sourceType=${sourceType}&externalId=${encodeURIComponent(externalId)}`
   );
   if (response.status === 204) {
     return null;
   }
   if (!response.ok) {
-    throw new Error('No se pudo buscar la canción.');
+    throw new Error('No se pudo buscar el contenido.');
   }
   return response.json();
 }
 
-/** Los temas del descubrimiento llegan de Last.fm en vivo; hay que registrarlos para poder reseñarlos. */
-export async function registerContent(token, track) {
+/** Los temas y artistas del descubrimiento llegan de Last.fm en vivo; hay que registrarlos para poder reseñarlos. */
+export async function registerContent(token, item, sourceType = 'track') {
   const response = await fetch(`${API_URL}/api/content`, {
     method: 'POST',
     headers: {
@@ -85,19 +85,19 @@ export async function registerContent(token, track) {
     },
     body: JSON.stringify({
       sourceApp: 'tapebeat',
-      sourceType: 'track',
-      externalId: String(track.externalId ?? track.id),
-      title: track.title,
-      description: track.description || '',
-      imageUrl: track.imageUrl || '',
+      sourceType,
+      externalId: String(item.externalId ?? item.id),
+      title: item.title,
+      description: item.description || '',
+      imageUrl: item.imageUrl || '',
       releaseDate: null,
-      genre: track.genre || 'General',
+      genre: item.genre || 'General',
     }),
   });
 
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(body.message || 'No se pudo registrar la canción.');
+    throw new Error(body.message || 'No se pudo registrar el contenido.');
   }
   return body;
 }
