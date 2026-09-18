@@ -11,6 +11,7 @@ import CategoryDrawer from './components/CategoryDrawer';
 import CatalogPage from './components/CatalogPage';
 import TrackDetailPage from './components/TrackDetailPage';
 import ArtistPage from './components/ArtistPage';
+import AlbumDetailPage from './components/AlbumDetailPage';
 import AuthModal from './components/AuthModal';
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
@@ -159,6 +160,9 @@ function AppShell({ sessionUser, onLogout, onAvatarChange, onLoginClick, theme, 
         onHome={() => applyFilter({ type: 'top', value: '' })}
         theme={theme}
         onThemeChange={onThemeChange}
+        filters={filters}
+        active={active}
+        onApplyFilter={applyFilter}
       />
 
       <CategoryDrawer
@@ -179,12 +183,18 @@ function AppShell({ sessionUser, onLogout, onAvatarChange, onLoginClick, theme, 
               error={error}
               activeFilter={activeFilter}
               active={active}
+              filters={filters}
+              onApplyFilter={applyFilter}
               onClearFilters={() => applyFilter({ type: 'top', value: '' })}
             />
           }
         />
         <Route path="/track/:trackId" element={<TrackDetailPage sessionUser={sessionUser} onLoginClick={onLoginClick} />} />
-        <Route path="/artist/:artistName" element={<ArtistPage />} />
+        <Route
+          path="/artist/:artistName"
+          element={<ArtistPage sessionUser={sessionUser} onLoginClick={onLoginClick} />}
+        />
+        <Route path="/album/:artist/:albumName" element={<AlbumDetailPage />} />
         <Route path="/" element={<Navigate to="/catalog" replace />} />
       </Routes>
     </div>

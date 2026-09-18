@@ -1,11 +1,25 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Chip } from '@heroui/react';
 import TrackCard from './TrackCard';
 import ArtistCard from './ArtistCard';
-import StackedShelf from './StackedShelf';
 import TopSlider from './TopSlider';
+import FeedReviewCard, { contentPath } from './FeedReviewCard';
 import { SkeletonCatalogGrid } from './Skeleton';
 import LoadingIcon from './LoadingIcon';
+import { getReviews } from '../api';
+
+const VIEW_MODE_KEY = 'tapecloud_catalog_view';
+const RECENTLY_REVIEWED_LIMIT = 18;
+const TRENDING_REVIEWS_LIMIT = 5;
+const POPULAR_REVIEWERS_LIMIT = 8;
+
+function getStoredViewMode() {
+  if (typeof localStorage === 'undefined') {
+    return 'grid';
+  }
+  return localStorage.getItem(VIEW_MODE_KEY) === 'list' ? 'list' : 'grid';
+}
 
 export default function CatalogPage({
   items,
@@ -13,11 +27,88 @@ export default function CatalogPage({
   error,
   activeFilter,
   active,
+  filters,
+  onApplyFilter,
   onClearFilters,
 }) {
+  const navigate = useNavigate();
+  const [viewMode, setViewMode] = useState(getStoredViewMode);
+  const [reviews, setReviews] = useState([]);
+  const [searchDraft, setSearchDraft] = useState('');
   const isFiltered = active.type !== 'top';
   const activeLabel = activeFilter?.options?.find((option) => option.value === active.value)?.label
     ?? active.value;
+
+  function changeViewMode(mode) {
+    setViewMode(mode);
+    localStorage.setItem(VIEW_MODE_KEY, mode);
+  }
+
+  // El feed de reseñas de toda la app solo hace falta en el inicio.
+  useEffect(() => {
+    if (isFiltered) {
+      return undefined;
+    }
+    let cancelled = false;
+    getReviews()
+      .then((data) => {
+        if (!cancelled) {
+          setReviews(data || []);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setReviews([]);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isFiltered]);
+
+  const recentlyReviewed = useMemo(() => {
+    const seen = new Set();
+    const unique = [];
+    for (const review of reviews) {
+      if (!seen.has(review.contentId)) {
+        seen.add(review.contentId);
+        unique.push(review);
+      }
+    }
+    return unique.slice(0, RECENTLY_REVIEWED_LIMIT);
+  }, [reviews]);
+
+  const trendingReviews = useMemo(
+    () =>
+      [...reviews]
+        .sort((a, b) => (b.likesCount ?? 0) - (a.likesCount ?? 0) || b.createdAt.localeCompare(a.createdAt))
+        .slice(0, TRENDING_REVIEWS_LIMIT),
+    [reviews]
+  );
+
+  const popularReviewers = useMemo(() => {
+    const byAuthor = new Map();
+    for (const review of reviews) {
+      const name = review.authorDisplayName || 'Anónimo';
+      const entry = byAuthor.get(name) || { name, reviews: 0, likes: 0 };
+      entry.reviews += 1;
+      entry.likes += review.likesCount ?? 0;
+      byAuthor.set(name, entry);
+    }
+    return Array.from(byAuthor.values())
+      .sort((a, b) => b.reviews - a.reviews || b.likes - a.likes)
+      .slice(0, POPULAR_REVIEWERS_LIMIT);
+  }, [reviews]);
+
+  const genreOptions = filters?.find((filter) => filter.type === 'genre')?.options ?? [];
+  const countryOptions = filters?.find((filter) => filter.type === 'country')?.options ?? [];
+
+  function submitSearch(event) {
+    event.preventDefault();
+    if (searchDraft.trim()) {
+      onApplyFilter({ type: 'search', value: searchDraft.trim() });
+    }
+  }
 
   const artists = items.filter((item) => item.kind === 'artist');
   const tracks = items
@@ -42,8 +133,7 @@ export default function CatalogPage({
   }, [tracks]);
 
   const hero = tracks.slice(0, 10);
-  const filmstrip = tracks.slice(10, 26);
-  const more = tracks.slice(26, 32);
+  const more = tracks.slice(10, 19);
 
   return (
     <main className="app-main">
@@ -65,6 +155,38 @@ export default function CatalogPage({
               {activeLabel}
               <span aria-hidden="true">✕</span>
             </Chip>
+          )}
+
+          {isFiltered && (
+            <div className="view-toggle" role="group" aria-label="Estilo de resultados">
+              <button
+                type="button"
+                className={`view-toggle__btn ${viewMode === 'grid' ? 'is-active' : ''}`}
+                onClick={() => changeViewMode('grid')}
+                aria-label="Ver en bloques"
+                aria-pressed={viewMode === 'grid'}
+              >
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="3" width="8" height="8" rx="1.5" />
+                  <rect x="13" y="3" width="8" height="8" rx="1.5" />
+                  <rect x="3" y="13" width="8" height="8" rx="1.5" />
+                  <rect x="13" y="13" width="8" height="8" rx="1.5" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className={`view-toggle__btn ${viewMode === 'list' ? 'is-active' : ''}`}
+                onClick={() => changeViewMode('list')}
+                aria-label="Ver en lista"
+                aria-pressed={viewMode === 'list'}
+              >
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="3" y1="6" x2="21" y2="6" strokeLinecap="round" />
+                  <line x1="3" y1="12" x2="21" y2="12" strokeLinecap="round" />
+                  <line x1="3" y1="18" x2="21" y2="18" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
           )}
         </div>
 
@@ -94,46 +216,153 @@ export default function CatalogPage({
               <h3 className="subsection-title">Canciones</h3>
             )}
 
-            <div className="cards-grid">
+            <div className={viewMode === 'list' ? 'cards-list' : 'cards-grid'}>
               {tracks.map((track) => (
-                <TrackCard key={track.id} track={track} />
+                <TrackCard key={track.id} track={track} variant={viewMode === 'list' ? 'list' : undefined} />
               ))}
             </div>
           </>
         ) : (
           <>
-            <TopSlider title="Más escuchadas" tracks={hero} />
+            <div className="explore-filters">
+              <select
+                className="explore-select"
+                value=""
+                onChange={(event) => event.target.value && onApplyFilter({ type: 'genre', value: event.target.value })}
+                aria-label="Género"
+              >
+                <option value="">Género</option>
+                {genreOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
 
-            {filmstrip.length > 0 && (
-              <div className="filmstrip-block">
-                <h3 className="subsection-title">Descubrí más</h3>
-                <p className="stack-shelf__hint">Pasá el mouse para desplegar el mazo</p>
-                <StackedShelf tracks={filmstrip} />
+              <select
+                className="explore-select"
+                value=""
+                onChange={(event) => event.target.value && onApplyFilter({ type: 'country', value: event.target.value })}
+                aria-label="País"
+              >
+                <option value="">País</option>
+                {countryOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+
+              <form className="explore-search" onSubmit={submitSearch}>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="7" />
+                  <line x1="16.5" y1="16.5" x2="21" y2="21" strokeLinecap="round" />
+                </svg>
+                <input
+                  type="search"
+                  placeholder="Buscar música..."
+                  value={searchDraft}
+                  onChange={(event) => setSearchDraft(event.target.value)}
+                />
+              </form>
+            </div>
+
+            <TopSlider title="Populares esta semana" tracks={hero} />
+
+            {recentlyReviewed.length > 0 && (
+              <div className="reviewed-block">
+                <div className="section-header">
+                  <h3 className="subsection-title">Recién reseñado...</h3>
+                  <span className="reviewed-block__count">
+                    {reviews.length.toLocaleString('es-AR')} calificaciones registradas
+                  </span>
+                </div>
+                <div className="reviewed-strip">
+                  {recentlyReviewed.map((review) => (
+                    <button
+                      key={review.contentId}
+                      type="button"
+                      className="reviewed-strip__item"
+                      title={review.contentTitle}
+                      onClick={() => navigate(contentPath(review))}
+                    >
+                      {review.contentImageUrl ? <img src={review.contentImageUrl} alt="" /> : <span>♪</span>}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
             <div className="split-section">
-              {featuredArtists.length > 0 && (
-                <div className="split-col">
-                  <h3 className="subsection-title">Artistas destacados</h3>
-                  <div className="artists-row artists-row--compact">
-                    {featuredArtists.map((artist) => (
-                      <ArtistCard key={artist.externalId} artist={artist} />
+              <div className="split-col">
+                <h3 className="subsection-title">Reseñas destacadas</h3>
+                {trendingReviews.length === 0 ? (
+                  <p className="no-reviews">Todavía no hay reseñas. ¡Sé el primero en escribir una!</p>
+                ) : (
+                  <div className="feed-review-list">
+                    {trendingReviews.map((review) => (
+                      <FeedReviewCard
+                        key={review.id}
+                        review={review}
+                        onOpen={() => navigate(contentPath(review))}
+                      />
                     ))}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
-              {more.length > 0 && (
-                <div className="split-col split-col--narrow">
-                  <h3 className="subsection-title">Seguí escuchando</h3>
-                  <div className="mini-grid">
-                    {more.map((track) => (
-                      <TrackCard key={track.id} track={track} variant="mini" />
-                    ))}
-                  </div>
-                </div>
-              )}
+              <div className="split-col split-col--narrow">
+                {more.length > 0 && (
+                  <>
+                    <h3 className="subsection-title">Más para descubrir</h3>
+                    <div className="mini-grid mini-grid--three">
+                      {more.map((track) => (
+                        <TrackCard key={track.id} track={track} variant="mini" />
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {featuredArtists.length > 0 && (
+                  <>
+                    <h3 className="subsection-title">Artistas destacados</h3>
+                    <div className="similar-artist-list">
+                      {featuredArtists.map((artist) => (
+                        <button
+                          key={artist.externalId}
+                          type="button"
+                          className="similar-artist-item"
+                          onClick={() => navigate(`/artist/${encodeURIComponent(artist.title)}`)}
+                        >
+                          <span className="similar-artist-item__avatar">
+                            {artist.imageUrl ? <img src={artist.imageUrl} alt="" /> : artist.title[0]}
+                          </span>
+                          <span>{artist.title}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {popularReviewers.length > 0 && (
+                  <>
+                    <h3 className="subsection-title">Reseñadores populares</h3>
+                    <div className="similar-artist-list">
+                      {popularReviewers.map((reviewer) => (
+                        <div key={reviewer.name} className="similar-artist-item similar-artist-item--static">
+                          <span className="similar-artist-item__avatar">{reviewer.name[0].toUpperCase()}</span>
+                          <span className="similar-artist-item__text">
+                            {reviewer.name}
+                            <small>
+                              {reviewer.reviews} {reviewer.reviews === 1 ? 'reseña' : 'reseñas'} · ♥ {reviewer.likes}
+                            </small>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </>
         )}
