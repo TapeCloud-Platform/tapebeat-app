@@ -40,3 +40,13 @@ export async function getTrackDetail(sourceApp, artist, track) {
   }
   return response.json();
 }
+
+/** Ficha de un álbum (portada, descripción, lista de temas), sin pasar por una canción puntual. */
+export async function getAlbumDetail(sourceApp, artist, album) {
+  const params = new URLSearchParams({ artist, album });
+  const response = await fetch(`${API_URL}/api/discover/${sourceApp}/album?${params}`);
+  if (!response.ok) {
+    return null;
+  }
+  return response.json();
+}
