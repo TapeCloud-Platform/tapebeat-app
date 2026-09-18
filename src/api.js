@@ -62,10 +62,6 @@ export async function resendVerificationCode(email) {
   return postJson('/api/auth/resend-code', { email });
 }
 
-export async function getMovies() {
-  return request('/api/content?sourceApp=tapebeat');
-}
-
 export async function findContentByExternalId(externalId) {
   const response = await fetch(
     `${API_URL}/api/content/lookup?sourceApp=tapebeat&sourceType=track&externalId=${encodeURIComponent(externalId)}`
@@ -210,18 +206,6 @@ export async function deleteComment(commentId, token) {
     const body = await response.json().catch(() => ({}));
     throw new Error(body.message || 'No se pudo eliminar el comentario.');
   }
-}
-
-export async function getProfileMetrics(userId) {
-  return request(`/api/profile/${userId}/metrics`);
-}
-
-export async function getMoviesPaginated(genre = null, page = 0, limit = 20) {
-  let url = `/api/content/paginated?sourceApp=tapebeat&page=${page}&limit=${limit}`;
-  if (genre && genre !== 'Todas') {
-    url += `&genre=${encodeURIComponent(genre)}`;
-  }
-  return request(url);
 }
 
 async function authedRequest(path, method, token, payload) {
