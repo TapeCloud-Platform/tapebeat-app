@@ -224,3 +224,36 @@ export async function getMoviesPaginated(genre = null, page = 0, limit = 20) {
   return request(url);
 }
 
+async function authedRequest(path, method, token, payload) {
+  const response = await fetch(`${API_URL}${path}`, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (response.status === 204) {
+    return null;
+  }
+
+  const body = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const error = new Error(body.message || 'No se pudo completar la operación.');
+    error.totpRequired = Boolean(body.totpRequired);
+    throw error;
+  }
+
+  return body;
+}
+
+export async function updateAvatar(token, avatarDataUri) {
+  return authedRequest('/api/auth/me/avatar', 'PATCH', token, { avatarDataUri });
+}
+
+export async function getMyReviewStats(token) {
+  return authedRequest('/api/reviews/me/stats', 'GET', token);
+}
+
