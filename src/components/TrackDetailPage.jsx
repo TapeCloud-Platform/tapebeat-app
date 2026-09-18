@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { Button, TextField, TextArea, Input, Label } from '@heroui/react';
 import {
   findContentByExternalId,
   registerContent,
@@ -13,10 +14,12 @@ import {
 } from '../api';
 import { getTrackDetail } from '../discoverApi';
 import { abbreviateNumbersInText } from '../utils/format';
+import StarRating from './StarRating';
+import AlreadyReviewedDialog from './AlreadyReviewedDialog';
 
 const SOURCE_APP = 'tapebeat';
 
-export default function TrackDetailPage({ sessionUser }) {
+export default function TrackDetailPage({ sessionUser, onLoginClick }) {
   const { trackId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -30,11 +33,23 @@ export default function TrackDetailPage({ sessionUser }) {
   const [commentDraft, setCommentDraft] = useState('');
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
-  const [form, setForm] = useState({ title: '', body: '', rating: '5' });
+  const [form, setForm] = useState({ title: '', body: '', rating: 5 });
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
+  const [showAlreadyReviewed, setShowAlreadyReviewed] = useState(false);
 
   const token = localStorage.getItem('tapecloud_token');
+  const hasOwnReview = Boolean(
+    sessionUser && reviews.some((review) => review.authorEmail === sessionUser.email)
+  );
+
+  function handleAddReviewClick() {
+    if (hasOwnReview) {
+      setShowAlreadyReviewed(true);
+      return;
+    }
+    setFormOpen(true);
+  }
 
   const loadReviews = useCallback(async (id) => {
     const data = await getReviews(id).catch(() => []);
@@ -106,9 +121,9 @@ export default function TrackDetailPage({ sessionUser }) {
       await createReview(targetId, token, {
         title: form.title,
         body: form.body,
-        rating: Number(form.rating),
+        rating: form.rating,
       });
-      setForm({ title: '', body: '', rating: '5' });
+      setForm({ title: '', body: '', rating: 5 });
       setFormOpen(false);
       setFormSuccess('Reseña publicada.');
       await loadReviews(targetId);
@@ -288,88 +303,14 @@ export default function TrackDetailPage({ sessionUser }) {
         <div className="detail-reviews-section">
           <h2>Reseñas y comentarios</h2>
 
-          {!sessionUser && (
-            <div className="login-notice flex-between">
-              <span>Iniciá sesión para dejar tu reseña.</span>
-              <a className="inline-login-btn" href="http://localhost:5173">
-                Iniciar sesión
-              </a>
-            </div>
-          )}
-
-          {sessionUser && !formOpen && (
-            <button type="button" className="add-review-button" onClick={() => setFormOpen(true)}>
-              + Agregar reseña
-            </button>
-          )}
-
-          {formSuccess && <p className="success-text">{formSuccess}</p>}
-
-          {sessionUser && formOpen && (
-            <form className="review-form" onSubmit={handleSubmitReview}>
-              {formError && <p className="error-text">{formError}</p>}
-
-              <div className="review-form-row">
-                <label className="review-field flex-1">
-                  Título
-                  <input
-                    type="text"
-                    maxLength={200}
-                    value={form.title}
-                    onChange={(event) => setForm({ ...form, title: event.target.value })}
-                    required
-                  />
-                </label>
-
-                <label className="review-field width-auto">
-                  Puntuación
-                  <select
-                    value={form.rating}
-                    onChange={(event) => setForm({ ...form, rating: event.target.value })}
-                  >
-                    {[5, 4, 3, 2, 1].map((value) => (
-                      <option key={value} value={value}>
-                        {value} ★
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-
-              <label className="review-field">
-                Tu opinión
-                <textarea
-                  rows={4}
-                  maxLength={4000}
-                  value={form.body}
-                  onChange={(event) => setForm({ ...form, body: event.target.value })}
-                  required
-                />
-              </label>
-
-              <div className="review-form-actions">
-                <button type="submit" className="submit-review-btn">
-                  Publicar reseña
-                </button>
-                <button
-                  type="button"
-                  className="logout-button-small"
-                  onClick={() => {
-                    setFormOpen(false);
-                    setFormError('');
-                  }}
-                >
-                  Cancelar
-                </button>
-              </div>
-            </form>
-          )}
-
-          {reviews.length === 0 ? (
-            <p className="no-reviews">No hay reseñas para esta canción aún.</p>
-          ) : (
-            <div className="modal-reviews-list">
-              {reviews.map((review) => (
+          <div className="review-panel">
+            <div className="review-panel__list">
+              {formError && !formOpen && <p className="error-text">{formError}</p>}
+              {reviews.length === 0 ? (
+                <p className="no-reviews">No hay reseñas para esta canción aún.</p>
+              ) : (
+                <div className="modal-reviews-list">
+                  {reviews.map((review) => (
                 <article key={review.id} className="review-card">
                   <div className="review-header">
                     <strong>{review.title}</strong>
@@ -457,11 +398,87 @@ export default function TrackDetailPage({ sessionUser }) {
                     </div>
                   )}
                 </article>
-              ))}
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+
+            <aside className="review-panel__form">
+              {!sessionUser ? (
+                <div className="login-notice">
+                  <span>Iniciá sesión para dejar tu reseña.</span>
+                  <button type="button" className="inline-login-btn" onClick={onLoginClick}>
+                    Iniciar sesión
+                  </button>
+                </div>
+              ) : (
+                <div className="review-form-card">
+                  <h3>Dejá tu reseña</h3>
+
+                  {formSuccess && <p className="success-text">{formSuccess}</p>}
+
+                  {!formOpen ? (
+                    <Button variant="primary" fullWidth onClick={handleAddReviewClick}>
+                      + Agregar reseña
+                    </Button>
+                  ) : (
+                    <form className="review-form" onSubmit={handleSubmitReview}>
+                      {formError && <p className="error-text">{formError}</p>}
+
+                      <TextField
+                        className="review-field"
+                        value={form.title}
+                        onChange={(title) => setForm({ ...form, title })}
+                        isRequired
+                      >
+                        <Label>Título</Label>
+                        <Input placeholder="Un resumen breve" maxLength={200} />
+                      </TextField>
+
+                      <div className="review-field">
+                        <span>Puntuación</span>
+                        <StarRating
+                          value={form.rating}
+                          onChange={(rating) => setForm({ ...form, rating })}
+                          size="lg"
+                        />
+                      </div>
+
+                      <TextField
+                        className="review-field"
+                        value={form.body}
+                        onChange={(body) => setForm({ ...form, body })}
+                        isRequired
+                      >
+                        <Label>Tu opinión</Label>
+                        <TextArea rows={5} maxLength={4000} placeholder="¿Qué te pareció?" />
+                      </TextField>
+
+                      <div className="review-form-actions">
+                        <Button type="submit" variant="primary">
+                          Publicar reseña
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => {
+                            setFormOpen(false);
+                            setFormError('');
+                          }}
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    </form>
+                  )}
+                </div>
+              )}
+            </aside>
+          </div>
         </div>
       </section>
+
+      <AlreadyReviewedDialog isOpen={showAlreadyReviewed} onClose={() => setShowAlreadyReviewed(false)} />
     </main>
   );
 }
