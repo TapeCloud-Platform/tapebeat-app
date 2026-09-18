@@ -20,6 +20,48 @@ async function request(path) {
   return contentType.includes('application/json') ? response.json() : response.text();
 }
 
+async function postJson(path, payload) {
+  const response = await fetch(`${API_URL}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (response.status === 204) {
+    if (!response.ok) {
+      throw new Error('No se pudo completar la operación.');
+    }
+    return null;
+  }
+
+  const body = await response.json();
+
+  if (!response.ok) {
+    const error = new Error(body.message || 'No se pudo completar la operación.');
+    error.totpRequired = Boolean(body.totpRequired);
+    throw error;
+  }
+
+  return body;
+}
+
+/** El login acepta email o nombre de usuario indistintamente. totpCode solo hace falta si la cuenta tiene 2FA activado. */
+export async function login(identifier, password, totpCode) {
+  return postJson('/api/auth/login', { identifier, password, totpCode: totpCode || undefined });
+}
+
+export async function register(email, username, password) {
+  return postJson('/api/auth/register', { email, username, password });
+}
+
+export async function verifyEmail(email, code) {
+  return postJson('/api/auth/verify-email', { email, code });
+}
+
+export async function resendVerificationCode(email) {
+  return postJson('/api/auth/resend-code', { email });
+}
+
 export async function getMovies() {
   return request('/api/content?sourceApp=tapebeat');
 }
@@ -181,3 +223,4 @@ export async function getMoviesPaginated(genre = null, page = 0, limit = 20) {
   }
   return request(url);
 }
+
