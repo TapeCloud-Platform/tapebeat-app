@@ -1,21 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Button, TextField, TextArea, Input, Label } from '@heroui/react';
-import {
-  findContentByExternalId,
-  registerContent,
-  getReviews,
-  createReview,
-  deleteReview,
-  toggleReviewLike,
-  getComments,
-  createComment,
-  deleteComment,
-} from '../api';
+import { findContentByExternalId, registerContent } from '../api';
 import { getTrackDetail } from '../discoverApi';
 import { abbreviateNumbersInText } from '../utils/format';
-import StarRating from './StarRating';
-import AlreadyReviewedDialog from './AlreadyReviewedDialog';
+import ReviewPanel from './ReviewPanel';
 
 const SOURCE_APP = 'tapebeat';
 
@@ -27,32 +15,17 @@ export default function TrackDetailPage({ sessionUser, onLoginClick }) {
   const [track, setTrack] = useState(location.state?.track || null);
   const [contentId, setContentId] = useState(null);
   const [albumDetail, setAlbumDetail] = useState(null);
-  const [reviews, setReviews] = useState([]);
-  const [commentsByReview, setCommentsByReview] = useState({});
-  const [openCommentsFor, setOpenCommentsFor] = useState(null);
-  const [commentDraft, setCommentDraft] = useState('');
   const [loading, setLoading] = useState(true);
-  const [formOpen, setFormOpen] = useState(false);
-  const [form, setForm] = useState({ title: '', body: '', rating: 5 });
-  const [formError, setFormError] = useState('');
-  const [formSuccess, setFormSuccess] = useState('');
-  const [showAlreadyReviewed, setShowAlreadyReviewed] = useState(false);
+  const [tab, setTab] = useState('home');
+  const [reviewStats, setReviewStats] = useState({
+    count: 0,
+    average: null,
+    yourRating: null,
+    distribution: [0, 0, 0, 0, 0],
+  });
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const token = localStorage.getItem('tapecloud_token');
-  const hasOwnReview = Boolean(sessionUser && reviews.some((review) => review.ownedByCurrentUser));
-
-  function handleAddReviewClick() {
-    if (hasOwnReview) {
-      setShowAlreadyReviewed(true);
-      return;
-    }
-    setFormOpen(true);
-  }
-
-  const loadReviews = useCallback(async (id) => {
-    const data = await getReviews(id).catch(() => []);
-    setReviews(data || []);
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -69,7 +42,6 @@ export default function TrackDetailPage({ sessionUser, onLoginClick }) {
           if (!track) {
             setTrack(item);
           }
-          await loadReviews(item.id);
         }
       } finally {
         if (!cancelled) {
@@ -82,7 +54,7 @@ export default function TrackDetailPage({ sessionUser, onLoginClick }) {
     return () => {
       cancelled = true;
     };
-  }, [trackId, track, loadReviews]);
+  }, [trackId, track]);
 
   useEffect(() => {
     const artist = track?.subtitle || track?.genre;
@@ -102,95 +74,29 @@ export default function TrackDetailPage({ sessionUser, onLoginClick }) {
     };
   }, [track]);
 
-  async function handleSubmitReview(event) {
-    event.preventDefault();
-    setFormError('');
-    setFormSuccess('');
-
-    try {
-      // Los temas que vienen del descubrimiento todavía no existen como ContentItem.
-      let targetId = contentId;
-      if (!targetId) {
-        const registered = await registerContent(token, { ...track, externalId: trackId });
-        targetId = registered.id;
-        setContentId(targetId);
-      }
-
-      await createReview(targetId, token, {
-        title: form.title,
-        body: form.body,
-        rating: form.rating,
-      });
-      setForm({ title: '', body: '', rating: 5 });
-      setFormOpen(false);
-      setFormSuccess('Reseña publicada.');
-      await loadReviews(targetId);
-    } catch (err) {
-      setFormError(err.message || 'No se pudo publicar la reseña.');
-    }
+  async function handleRegisterContent() {
+    // Los temas que vienen del descubrimiento todavía no existen como ContentItem.
+    const registered = await registerContent(token, { ...track, externalId: trackId });
+    setContentId(registered.id);
+    return registered.id;
   }
 
-  async function handleToggleLike(reviewId) {
-    try {
-      await toggleReviewLike(reviewId, token);
-      await loadReviews(contentId);
-    } catch {
-      // El like es opcional; si falla no se interrumpe la vista.
-    }
-  }
-
-  async function handleDeleteReview(reviewId) {
-    try {
-      await deleteReview(reviewId, token);
-      await loadReviews(contentId);
-    } catch (err) {
-      setFormError(err.message || 'No se pudo eliminar la reseña.');
-    }
-  }
-
-  async function toggleComments(reviewId) {
-    if (openCommentsFor === reviewId) {
-      setOpenCommentsFor(null);
+  function handleRateClick() {
+    if (!sessionUser) {
+      onLoginClick?.();
       return;
     }
-
-    setOpenCommentsFor(reviewId);
-    if (!commentsByReview[reviewId]) {
-      const data = await getComments(reviewId).catch(() => []);
-      setCommentsByReview((current) => ({ ...current, [reviewId]: data || [] }));
-    }
+    setTab('reviews');
   }
 
-  async function handleSubmitComment(event, reviewId) {
-    event.preventDefault();
-    if (!commentDraft.trim()) {
-      return;
-    }
-
-    try {
-      const created = await createComment(reviewId, token, { body: commentDraft });
-      setCommentsByReview((current) => ({
-        ...current,
-        [reviewId]: [...(current[reviewId] || []), created],
-      }));
-      setCommentDraft('');
-      await loadReviews(contentId);
-    } catch {
-      // Se ignora para no bloquear la lectura de la reseña.
-    }
-  }
-
-  async function handleDeleteComment(reviewId, commentId) {
-    try {
-      await deleteComment(commentId, token);
-      setCommentsByReview((current) => ({
-        ...current,
-        [reviewId]: (current[reviewId] || []).filter((c) => c.id !== commentId),
-      }));
-      await loadReviews(contentId);
-    } catch {
-      // Se ignora.
-    }
+  function copyLink() {
+    navigator.clipboard
+      ?.writeText(window.location.href)
+      .then(() => {
+        setLinkCopied(true);
+        setTimeout(() => setLinkCopied(false), 2000);
+      })
+      .catch(() => {});
   }
 
   if (loading) {
@@ -216,14 +122,17 @@ export default function TrackDetailPage({ sessionUser, onLoginClick }) {
     );
   }
 
-  const averageRating = reviews.length
-    ? (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length).toFixed(1)
-    : null;
-
   const artist = track.subtitle || track.genre;
   // La descripción trae Artista, N oyentes, N reproducciones
   const plays = track.description?.includes('·')
     ? abbreviateNumbersInText(track.description.split('·').slice(1).join(' · ').trim())
+    : null;
+
+  const shareText = `Mirá "${track.title}" en TapeBeat`;
+  const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(window.location.href)}`;
+  const maxDistribution = Math.max(1, ...reviewStats.distribution);
+  const trackPosition = albumDetail?.albumTracks
+    ? albumDetail.albumTracks.findIndex((name) => name.toLowerCase() === track.title.toLowerCase()) + 1 || null
     : null;
 
   return (
@@ -237,10 +146,6 @@ export default function TrackDetailPage({ sessionUser, onLoginClick }) {
         >
           ← Catálogo
         </button>
-        <div>
-          <p className="eyebrow">Detalles de la canción</p>
-          <h1>{track.title}</h1>
-        </div>
       </header>
 
       <section className="detail-page">
@@ -250,6 +155,7 @@ export default function TrackDetailPage({ sessionUser, onLoginClick }) {
           )}
 
           <div className="detail-info">
+            <h1>{track.title}</h1>
             {artist && (
               <button
                 type="button"
@@ -260,223 +166,215 @@ export default function TrackDetailPage({ sessionUser, onLoginClick }) {
               </button>
             )}
 
-            <div className="detail-stats">
-              {averageRating && (
-                <span className="stat-pill rating">
-                  ⭐ {averageRating}/5 · {reviews.length} reseñas
-                </span>
-              )}
-              {plays && <span className="stat-pill">{plays}</span>}
-              {albumDetail?.albumName && (
-                <span className="stat-pill">💿 {albumDetail.albumName}</span>
-              )}
+            {plays && (
+              <div className="detail-stats">
+                <span className="stat-pill">{plays}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="entity-hero__right">
+            <div className="entity-hero__stats">
+              <div className="entity-hero__stat">
+                <strong>{reviewStats.count}</strong>
+                <span>Calificaciones</span>
+              </div>
+              <div className="entity-hero__stat">
+                <strong>★ {reviewStats.average ? reviewStats.average.toFixed(1) : '—'}/5</strong>
+                <span>Promedio</span>
+              </div>
+              <div className="entity-hero__stat">
+                <strong>☆ {reviewStats.yourRating ?? 0}/5</strong>
+                <span>Tu calificación</span>
+              </div>
             </div>
+
+            {!(sessionUser && reviewStats.yourRating != null) && (
+              <button type="button" className="entity-hero__cta" onClick={handleRateClick}>
+                {sessionUser ? '★ Calificar esta canción' : '🔒 Iniciá sesión para calificar'}
+              </button>
+            )}
           </div>
         </div>
 
-        {albumDetail?.albumName && (
-          <div className="album-section">
-            <h2>Del álbum</h2>
-            <div className="track-album-card">
-              {albumDetail.albumImageUrl && (
-                <img
-                  className="track-album-card__cover"
-                  src={albumDetail.albumImageUrl}
-                  alt={albumDetail.albumName}
-                />
-              )}
-              <div className="track-album-card__info">
-                <h3>{albumDetail.albumName}</h3>
-                {albumDetail.albumTrackCount > 0 && (
-                  <p className="track-album-card__meta">{albumDetail.albumTrackCount} canciones</p>
-                )}
-                <p className="track-album-card__description">
-                  {albumDetail.albumDescription || 'Todavía no hay una descripción de este álbum.'}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+        <nav className="entity-tabs">
+          {[
+            { value: 'home', label: 'Inicio' },
+            { value: 'reviews', label: 'Reseñas' },
+          ].map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className={`entity-tabs__item ${tab === option.value ? 'is-active' : ''}`}
+              onClick={() => setTab(option.value)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </nav>
 
-        <div className="detail-reviews-section">
-          <h2>Reseñas y comentarios</h2>
-
-          <div className="review-panel">
-            <div className="review-panel__list">
-              {formError && !formOpen && <p className="error-text">{formError}</p>}
-              {reviews.length === 0 ? (
-                <p className="no-reviews">No hay reseñas para esta canción aún.</p>
-              ) : (
-                <div className="modal-reviews-list">
-                  {reviews.map((review) => (
-                <article key={review.id} className="review-card">
-                  <div className="review-header">
-                    <strong>{review.title}</strong>
-                    <div className="modal-review-actions">
-                      <span className="review-rating">⭐ {review.rating}/5</span>
-                      {review.ownedByCurrentUser && (
-                        <button
-                          type="button"
-                          className="delete-review-btn"
-                          onClick={() => handleDeleteReview(review.id)}
-                          title="Eliminar reseña"
-                        >
-                          🗑
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <p className="review-body">{review.body}</p>
-                  <small className="review-author">
-                    Por: {review.authorDisplayName || 'Anónimo'}
-                  </small>
-
-                  <div className="review-interaction-bar">
-                    <button
-                      type="button"
-                      className={`like-btn ${review.likedByCurrentUser ? 'is-liked' : ''}`}
-                      onClick={() => handleToggleLike(review.id)}
-                      disabled={!sessionUser}
-                    >
-                      ♥ {review.likesCount ?? 0}
-                    </button>
-                    <button
-                      type="button"
-                      className="comments-toggle-btn"
-                      onClick={() => toggleComments(review.id)}
-                    >
-                      💬 {review.commentsCount ?? 0} comentarios
-                    </button>
-                  </div>
-
-                  {openCommentsFor === review.id && (
-                    <div className="comments-thread">
-                      <div className="comments-list">
-                        {(commentsByReview[review.id] || []).map((comment) => (
-                          <div key={comment.id} className="comment-item">
-                            <div className="comment-item-header">
-                              <strong>
-                                {comment.authorDisplayName || 'Anónimo'}
-                              </strong>
-                              {comment.ownedByCurrentUser && (
-                                <button
-                                  type="button"
-                                  className="delete-comment-btn"
-                                  onClick={() => handleDeleteComment(review.id, comment.id)}
-                                  title="Eliminar comentario"
-                                >
-                                  🗑
-                                </button>
-                              )}
-                            </div>
-                            <p className="comment-item-body">{comment.body}</p>
+        <div className="entity-layout">
+          <div className="entity-main">
+            {tab === 'home' && (
+              <>
+                <section className="section-block">
+                  <h2 className="subsection-title">Información</h2>
+                  <div className="information-panel">
+                    {reviewStats.count > 0 && (
+                      <div className="rating-distribution rating-distribution--wide">
+                        {reviewStats.distribution.map((count, index) => (
+                          <div key={index} className="rating-distribution__bar-row">
+                            <span>{index + 1}★</span>
+                            <span className="rating-distribution__track">
+                              <span
+                                className="rating-distribution__fill"
+                                style={{ width: `${(count / maxDistribution) * 100}%` }}
+                              />
+                            </span>
+                            <span>{count}</span>
                           </div>
                         ))}
                       </div>
+                    )}
 
-                      {sessionUser ? (
-                        <form
-                          className="comment-form"
-                          onSubmit={(event) => handleSubmitComment(event, review.id)}
-                        >
-                          <input
-                            type="text"
-                            placeholder="Escribí un comentario..."
-                            value={commentDraft}
-                            onChange={(event) => setCommentDraft(event.target.value)}
-                          />
-                          <button type="submit" className="submit-comment-btn">
-                            Enviar
+                    <div className="information-grid">
+                      <div className="information-cell">
+                        <h4>Álbum</h4>
+                        {albumDetail?.albumName ? (
+                          <p>
+                            {trackPosition ? `Track ${trackPosition} en ` : ''}
+                            <button
+                              type="button"
+                              className="information-cell__link"
+                              onClick={() =>
+                                navigate(`/album/${encodeURIComponent(artist)}/${encodeURIComponent(albumDetail.albumName)}`, {
+                                  state: { currentTrack: track.title },
+                                })
+                              }
+                            >
+                              {albumDetail.albumName}
+                            </button>
+                          </p>
+                        ) : (
+                          <p className="information-cell__empty">Sin datos del álbum.</p>
+                        )}
+                      </div>
+
+                      <div className="information-cell">
+                        <h4>Artistas</h4>
+                        {artist ? (
+                          <button
+                            type="button"
+                            className="information-cell__link"
+                            onClick={() => navigate(`/artist/${encodeURIComponent(artist)}`)}
+                          >
+                            {artist}
                           </button>
-                        </form>
-                      ) : (
-                        <p className="login-notice-small">Iniciá sesión para comentar.</p>
+                        ) : (
+                          <p className="information-cell__empty">—</p>
+                        )}
+                      </div>
+
+                      {albumDetail?.durationSeconds > 0 && (
+                        <div className="information-cell">
+                          <h4>Duración</h4>
+                          <p>
+                            {Math.floor(albumDetail.durationSeconds / 60)} minutos{' '}
+                            {albumDetail.durationSeconds % 60} segundos
+                          </p>
+                        </div>
                       )}
                     </div>
-                  )}
-                </article>
-                  ))}
-                </div>
-              )}
+                  </div>
+                </section>
+
+                {albumDetail?.albumName && (
+                  <section className="section-block">
+                    <h2 className="subsection-title">Del álbum</h2>
+                    <div className="track-album-card">
+                      {albumDetail.albumImageUrl && (
+                        <img
+                          className="track-album-card__cover"
+                          src={albumDetail.albumImageUrl}
+                          alt={albumDetail.albumName}
+                        />
+                      )}
+                      <div className="track-album-card__info">
+                        <button
+                          type="button"
+                          className="track-album-card__title-link"
+                          onClick={() =>
+                            navigate(`/album/${encodeURIComponent(artist)}/${encodeURIComponent(albumDetail.albumName)}`, {
+                              state: { currentTrack: track.title },
+                            })
+                          }
+                        >
+                          {albumDetail.albumName}
+                        </button>
+                        {albumDetail.albumTrackCount > 0 && (
+                          <p className="track-album-card__meta">{albumDetail.albumTrackCount} canciones</p>
+                        )}
+                        <p className="track-album-card__description">
+                          {albumDetail.albumDescription || 'Todavía no hay una descripción de este álbum.'}
+                        </p>
+                      </div>
+                    </div>
+                  </section>
+                )}
+              </>
+            )}
+
+            {tab === 'reviews' && (
+              <section className="section-block">
+                <h2 className="subsection-title">Reseñas y comentarios</h2>
+                <ReviewPanel
+                  contentId={contentId}
+                  onRegister={handleRegisterContent}
+                  sessionUser={sessionUser}
+                  onLoginClick={onLoginClick}
+                  emptyMessage="No hay reseñas para esta canción aún."
+                  onStatsChange={setReviewStats}
+                />
+              </section>
+            )}
+          </div>
+
+          <aside className="entity-sidebar">
+            <div className="entity-sidebar__actions">
+              <button type="button" onClick={handleRateClick}>
+                Escribir reseña
+              </button>
+              <div className="entity-sidebar__share">
+                <button type="button" onClick={copyLink}>
+                  {linkCopied ? 'Copiado ✓' : 'Copiar enlace'}
+                </button>
+                <a href={twitterShareUrl} target="_blank" rel="noreferrer">
+                  Compartir en X
+                </a>
+              </div>
             </div>
 
-            <aside className="review-panel__form">
-              {!sessionUser ? (
-                <div className="login-notice">
-                  <span>Iniciá sesión para dejar tu reseña.</span>
-                  <button type="button" className="inline-login-btn" onClick={onLoginClick}>
-                    Iniciar sesión
-                  </button>
+            {albumDetail?.albumTracks?.length > 0 && (
+              <div className="entity-sidebar__panel">
+                <h3>Canciones del álbum</h3>
+                <div className="tracklist">
+                  {albumDetail.albumTracks.map((name, index) => (
+                    <div
+                      key={`${name}-${index}`}
+                      className={`tracklist-item ${
+                        name.toLowerCase() === track.title.toLowerCase() ? 'is-current' : ''
+                      }`}
+                    >
+                      <span className="tracklist-item__index">{index + 1}</span>
+                      <span className="tracklist-item__name">{name}</span>
+                    </div>
+                  ))}
                 </div>
-              ) : (
-                <div className="review-form-card">
-                  <h3>Dejá tu reseña</h3>
-
-                  {formSuccess && <p className="success-text">{formSuccess}</p>}
-
-                  {!formOpen ? (
-                    <Button variant="primary" fullWidth onClick={handleAddReviewClick}>
-                      + Agregar reseña
-                    </Button>
-                  ) : (
-                    <form className="review-form" onSubmit={handleSubmitReview}>
-                      {formError && <p className="error-text">{formError}</p>}
-
-                      <TextField
-                        className="review-field"
-                        value={form.title}
-                        onChange={(title) => setForm({ ...form, title })}
-                        isRequired
-                      >
-                        <Label>Título</Label>
-                        <Input placeholder="Un resumen breve" maxLength={200} />
-                      </TextField>
-
-                      <div className="review-field">
-                        <span>Puntuación</span>
-                        <StarRating
-                          value={form.rating}
-                          onChange={(rating) => setForm({ ...form, rating })}
-                          size="lg"
-                        />
-                      </div>
-
-                      <TextField
-                        className="review-field"
-                        value={form.body}
-                        onChange={(body) => setForm({ ...form, body })}
-                        isRequired
-                      >
-                        <Label>Tu opinión</Label>
-                        <TextArea rows={5} maxLength={4000} placeholder="¿Qué te pareció?" />
-                      </TextField>
-
-                      <div className="review-form-actions">
-                        <Button type="submit" variant="primary">
-                          Publicar reseña
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={() => {
-                            setFormOpen(false);
-                            setFormError('');
-                          }}
-                        >
-                          Cancelar
-                        </Button>
-                      </div>
-                    </form>
-                  )}
-                </div>
-              )}
-            </aside>
-          </div>
+              </div>
+            )}
+          </aside>
         </div>
       </section>
-
-      <AlreadyReviewedDialog isOpen={showAlreadyReviewed} onClose={() => setShowAlreadyReviewed(false)} />
     </main>
   );
 }
