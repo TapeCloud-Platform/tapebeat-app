@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
-import { Chip, Spinner } from '@heroui/react';
+import { Chip } from '@heroui/react';
 import TrackCard from './TrackCard';
 import ArtistCard from './ArtistCard';
-import FilterBar from './FilterBar';
 import StackedShelf from './StackedShelf';
 import TopSlider from './TopSlider';
-import { extractStat } from '../utils/format';
+import { SkeletonCatalogGrid } from './Skeleton';
+import LoadingIcon from './LoadingIcon';
 
 export default function CatalogPage({
   items,
@@ -13,17 +13,9 @@ export default function CatalogPage({
   error,
   activeFilter,
   active,
-  filters,
-  onApplyFilter,
   onClearFilters,
-  sortBy,
-  onSortChange,
 }) {
   const isFiltered = active.type !== 'top';
-  // El sort por oyentes/reproducciones solo tiene datos reales en la vista
-  // "top" (ver FilterBar) — cuando está activo, se muestra como grilla plana
-  // en vez de las secciones curadas (hero/mazo/destacados).
-  const isSorted = !isFiltered && sortBy !== 'relevance';
   const activeLabel = activeFilter?.options?.find((option) => option.value === active.value)?.label
     ?? active.value;
 
@@ -31,22 +23,6 @@ export default function CatalogPage({
   const tracks = items
     .filter((item) => item.kind !== 'artist')
     .map((item) => ({ ...item, id: item.externalId }));
-
-  // El backend no tiene sort ni fecha: ordenamos en el cliente con los datos
-  // de oyentes/reproducciones que ya vienen (como texto) en la descripción.
-  const sortedTracks = useMemo(() => {
-    if (sortBy === 'listeners') {
-      return [...tracks].sort(
-        (a, b) => extractStat(b.description, 'oyentes') - extractStat(a.description, 'oyentes')
-      );
-    }
-    if (sortBy === 'playcount') {
-      return [...tracks].sort(
-        (a, b) => extractStat(b.description, 'reproducciones') - extractStat(a.description, 'reproducciones')
-      );
-    }
-    return tracks;
-  }, [tracks, sortBy]);
 
   // No hay endpoint de "top artistas" en el backend: los derivamos de las
   // propias canciones más escuchadas, sin repetir artista.
@@ -71,14 +47,6 @@ export default function CatalogPage({
 
   return (
     <main className="app-main">
-      <FilterBar
-        filters={filters}
-        active={active}
-        onApply={onApplyFilter}
-        sortBy={sortBy}
-        onSortChange={onSortChange}
-      />
-
       <section className="section-block">
         <div className="section-header">
           <h2>{activeFilter?.label ?? 'Contenido'}</h2>
@@ -103,8 +71,11 @@ export default function CatalogPage({
         {error && <p className="error">{error}</p>}
 
         {loading ? (
-          <div className="loading-text">
-            <Spinner size="md" /> Cargando...
+          <div className="catalog-loading">
+            <SkeletonCatalogGrid count={10} />
+            <div className="catalog-loading-icon-row">
+              <LoadingIcon size={22} />
+            </div>
           </div>
         ) : isFiltered ? (
           <>
@@ -129,12 +100,6 @@ export default function CatalogPage({
               ))}
             </div>
           </>
-        ) : isSorted ? (
-          <div className="cards-grid">
-            {sortedTracks.map((track) => (
-              <TrackCard key={track.id} track={track} />
-            ))}
-          </div>
         ) : (
           <>
             <TopSlider title="Más escuchadas" tracks={hero} />

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { discover, getProfile } from '../discoverApi';
 import { formatCompactNumber } from '../utils/format';
+import { SkeletonCatalogGrid } from './Skeleton';
 
 const TABS = [
   { value: 'album', label: 'Álbumes' },
@@ -144,7 +145,7 @@ export default function ArtistPage() {
         {error && <p className="error">{error}</p>}
 
         {loading ? (
-          <p className="loading-text">Cargando...</p>
+          <SkeletonCatalogGrid count={6} />
         ) : (
           <div className="cards-grid">
             {visible.map((album) => (

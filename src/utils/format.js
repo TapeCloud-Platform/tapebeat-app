@@ -12,16 +12,3 @@ export function abbreviateNumbersInText(text) {
   }
   return text.replace(/\d+/g, (match) => formatCompactNumber(Number(match)));
 }
-
-/**
- * Extrae un número de la descripción cruda que devuelve el backend
- * (ej: "Artista · 116061 oyentes · 947091 reproducciones"). No hay estos
- * datos como campos separados, así que se parsean del texto.
- */
-export function extractStat(description, label) {
-  if (!description) {
-    return 0;
-  }
-  const match = description.match(new RegExp(`(\\d+)\\s*${label}`, 'i'));
-  return match ? Number(match[1]) : 0;
-}
