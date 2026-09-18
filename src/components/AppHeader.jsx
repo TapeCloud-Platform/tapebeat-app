@@ -4,6 +4,9 @@ import SettingsMenu from './SettingsMenu';
 import AppSwitcher from './AppSwitcher';
 import LoadingIcon from './LoadingIcon';
 import tapebeatIcon from '../assets/tapebeat-icon.png';
+import tapebeatIconLight from '../assets/tapebeat-icon-light.png';
+
+const NAV_GENRE_COUNT = 6;
 
 export default function AppHeader({
   appName,
@@ -20,6 +23,9 @@ export default function AppHeader({
   onHome,
   theme,
   onThemeChange,
+  filters,
+  active,
+  onApplyFilter,
 }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -49,15 +55,32 @@ export default function AppHeader({
   }
 
   const showSuggestions = searchOpen && query.trim().length >= 2;
+  const genreFilter = filters?.find((filter) => filter.type === 'genre');
+  const navGenres = genreFilter?.options.slice(0, NAV_GENRE_COUNT) ?? [];
 
   return (
     <header className="app-header">
-      <div className="app-header__bar">
+      <div className="app-header__topbar">
+        <button
+          type="button"
+          className="icon-button app-header__hamburger"
+          onClick={onOpenMenu}
+          aria-label="Abrir categorías"
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="3" y1="6" x2="21" y2="6" strokeLinecap="round" />
+            <line x1="3" y1="12" x2="21" y2="12" strokeLinecap="round" />
+            <line x1="3" y1="18" x2="21" y2="18" strokeLinecap="round" />
+          </svg>
+        </button>
+
         <button type="button" className="app-header__brand" onClick={onHome} aria-label="Volver al inicio">
-          <div>
-            <h1 className="app-header__title">{appName}</h1>
-            <p className="app-header__tagline">{tagline}</p>
-          </div>
+          <img
+            className="app-header__logo"
+            src={theme === 'light' ? tapebeatIconLight : tapebeatIcon}
+            alt={appName}
+          />
+          <span className="app-header__wordmark">{appName}</span>
         </button>
 
         <div className="app-header__actions">
@@ -126,23 +149,36 @@ export default function AppHeader({
             portalUrl={portalUrl}
           />
 
-          <Button
-            isIconOnly
-            variant="ghost"
-            className="icon-button"
-            onClick={onOpenMenu}
-            aria-label="Abrir filtros"
-          >
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="3" y1="6" x2="21" y2="6" strokeLinecap="round" />
-              <line x1="3" y1="12" x2="21" y2="12" strokeLinecap="round" />
-              <line x1="3" y1="18" x2="21" y2="18" strokeLinecap="round" />
-            </svg>
-          </Button>
-
-          <AppSwitcher current="tapebeat" theme={theme} logoSrc={tapebeatIcon} appName="TapeBeat" />
+          <AppSwitcher current="tapebeat" theme={theme} logoSrc={theme === 'light' ? tapebeatIconLight : tapebeatIcon} appName="TapeBeat" />
         </div>
       </div>
+
+      {navGenres.length > 0 && (
+        <nav className="app-header__navbar" aria-label="Géneros">
+          <button
+            type="button"
+            className={`app-header__nav-link ${active?.type === 'top' ? 'is-active' : ''}`}
+            onClick={onHome}
+          >
+            Inicio
+          </button>
+          {navGenres.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className={`app-header__nav-link ${
+                active?.type === 'genre' && active?.value === option.value ? 'is-active' : ''
+              }`}
+              onClick={() => onApplyFilter({ type: 'genre', value: option.value })}
+            >
+              {option.label}
+            </button>
+          ))}
+          <button type="button" className="app-header__nav-link app-header__nav-more" onClick={onOpenMenu}>
+            Más
+          </button>
+        </nav>
+      )}
     </header>
   );
 }
