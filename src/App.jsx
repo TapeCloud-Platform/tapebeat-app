@@ -74,7 +74,7 @@ function getSessionUser() {
 }
 
 /** El header y el drawer viven fuera de las rutas para no desaparecer en el detalle. */
-function AppShell({ sessionUser, onLogout, onAvatarChange, onLoginClick, theme, onThemeChange }) {
+function AppShell({ sessionUser, onLogout, onLoginClick, theme, onThemeChange }) {
   const navigate = useNavigate();
   const [filters, setFilters] = useState([]);
   const [active, setActive] = useState({ type: 'top', value: '' });
@@ -153,7 +153,6 @@ function AppShell({ sessionUser, onLogout, onAvatarChange, onLoginClick, theme, 
         portalUrl={portalUrl}
         sessionUser={sessionUser}
         onLogout={onLogout}
-        onAvatarChange={onAvatarChange}
         onLoginClick={onLoginClick}
         onSearch={(query) => applyFilter({ type: 'search', value: query })}
         onSearchPreview={handleSearchPreview}
@@ -276,15 +275,6 @@ export default function App() {
     setSessionUser(null);
   }
 
-  function handleAvatarChange(avatarDataUri) {
-    if (avatarDataUri) {
-      localStorage.setItem('tapecloud_avatar', avatarDataUri);
-    } else {
-      localStorage.removeItem('tapecloud_avatar');
-    }
-    setSessionUser((current) => (current ? { ...current, avatarDataUri: avatarDataUri || null } : current));
-  }
-
   function handleLoginSuccess(response) {
     localStorage.setItem('tapecloud_token', response.token);
     localStorage.setItem('tapecloud_email', response.email);
@@ -308,7 +298,6 @@ export default function App() {
       <AppShell
         sessionUser={sessionUser}
         onLogout={handleLogout}
-        onAvatarChange={handleAvatarChange}
         onLoginClick={() => setAuthView('login')}
         theme={theme}
         onThemeChange={setTheme}

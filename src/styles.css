@@ -185,6 +185,13 @@ button, input, textarea {
   justify-self: start;
 }
 
+.app-header__left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-self: start;
+}
+
 .app-header__brand {
   display: flex;
   align-items: center;
@@ -636,10 +643,19 @@ a.app-switcher__item:hover {
 @media (max-width: 640px) {
   .app-header__topbar {
     grid-template-columns: auto 1fr auto;
+    gap: 10px;
+  }
+
+  .app-header__actions {
+    gap: 6px;
   }
 
   .app-header__wordmark {
     font-size: 1.4rem;
+  }
+
+  .app-header__tagline {
+    display: none;
   }
 
   .app-header__logo {
@@ -1534,7 +1550,7 @@ h1, h2, h3, p {
 .account-menu__panel {
   counter-reset: account-section;
   position: relative;
-  width: 340px;
+  width: min(340px, calc(100vw - 32px));
   max-height: min(80vh, 640px);
   overflow-y: auto;
   padding: 20px;
@@ -1664,16 +1680,6 @@ h1, h2, h3, p {
   margin-top: 18px;
   padding-top: 14px;
   border-top: 1px solid var(--border-soft);
-}
-
-.account-menu__avatar-actions {
-  display: flex;
-  flex-direction: column;
-  margin-top: 4px;
-}
-
-.account-menu__file-input {
-  display: none;
 }
 
 .account-menu__guest-cta {
@@ -2265,6 +2271,13 @@ h1, h2, h3, p {
 
 .otp-input__cell:disabled {
   opacity: 0.6;
+}
+
+@media (max-width: 380px) {
+  .otp-input__cell {
+    width: 40px;
+    height: 50px;
+  }
 }
 
 /* Escudo verde de éxito y celebración con confeti */

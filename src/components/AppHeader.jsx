@@ -14,7 +14,6 @@ export default function AppHeader({
   portalUrl,
   sessionUser,
   onLogout,
-  onAvatarChange,
   onLoginClick,
   onSearch,
   onSearchPreview,
@@ -61,18 +60,29 @@ export default function AppHeader({
   return (
     <header className="app-header">
       <div className="app-header__topbar">
-        <button
-          type="button"
-          className="icon-button app-header__hamburger"
-          onClick={onOpenMenu}
-          aria-label="Abrir categorías"
-        >
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="3" y1="6" x2="21" y2="6" strokeLinecap="round" />
-            <line x1="3" y1="12" x2="21" y2="12" strokeLinecap="round" />
-            <line x1="3" y1="18" x2="21" y2="18" strokeLinecap="round" />
-          </svg>
-        </button>
+        <div className="app-header__left">
+          <SettingsMenu
+            sessionUser={sessionUser}
+            onLogout={onLogout}
+            onLoginClick={onLoginClick}
+            theme={theme}
+            onThemeChange={onThemeChange}
+            portalUrl={portalUrl}
+          />
+
+          <button
+            type="button"
+            className="icon-button app-header__hamburger"
+            onClick={onOpenMenu}
+            aria-label="Abrir categorías"
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="3" y1="6" x2="21" y2="6" strokeLinecap="round" />
+              <line x1="3" y1="12" x2="21" y2="12" strokeLinecap="round" />
+              <line x1="3" y1="18" x2="21" y2="18" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
 
         <button type="button" className="app-header__brand" onClick={onHome} aria-label="Volver al inicio">
           <img
@@ -138,16 +148,6 @@ export default function AppHeader({
               <line x1="16.5" y1="16.5" x2="21" y2="21" strokeLinecap="round" />
             </svg>
           </Button>
-
-          <SettingsMenu
-            sessionUser={sessionUser}
-            onLogout={onLogout}
-            onAvatarChange={onAvatarChange}
-            onLoginClick={onLoginClick}
-            theme={theme}
-            onThemeChange={onThemeChange}
-            portalUrl={portalUrl}
-          />
 
           <AppSwitcher current="tapebeat" theme={theme} logoSrc={theme === 'light' ? tapebeatIconLight : tapebeatIcon} appName="TapeBeat" />
         </div>
