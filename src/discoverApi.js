@@ -1,0 +1,52 @@
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+
+export async function getFilters(sourceApp) {
+  const response = await fetch(`${API_URL}/api/discover/${sourceApp}/filters`);
+  if (!response.ok) {
+    throw new Error('No se pudieron cargar los filtros.');
+  }
+  return response.json();
+}
+
+export async function discover(sourceApp, { type = 'top', value = '', limit = 30 } = {}) {
+  const params = new URLSearchParams({ type, limit: String(limit) });
+  if (value) {
+    params.set('value', value);
+  }
+
+  const response = await fetch(`${API_URL}/api/discover/${sourceApp}?${params}`);
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body.message || 'No se pudo cargar el contenido.');
+  }
+  return response.json();
+}
+
+export async function getProfile(sourceApp, name) {
+  const params = new URLSearchParams({ value: name });
+  const response = await fetch(`${API_URL}/api/discover/${sourceApp}/profile?${params}`);
+  if (!response.ok) {
+    return null;
+  }
+  return response.json();
+}
+
+/** Álbum de origen de una canción (nombre, portada y descripción, si el backend los tiene). */
+export async function getTrackDetail(sourceApp, artist, track) {
+  const params = new URLSearchParams({ artist, track });
+  const response = await fetch(`${API_URL}/api/discover/${sourceApp}/track?${params}`);
+  if (!response.ok) {
+    return null;
+  }
+  return response.json();
+}
+
+/** Ficha de un álbum (portada, descripción, lista de temas), sin pasar por una canción puntual. */
+export async function getAlbumDetail(sourceApp, artist, album) {
+  const params = new URLSearchParams({ artist, album });
+  const response = await fetch(`${API_URL}/api/discover/${sourceApp}/album?${params}`);
+  if (!response.ok) {
+    return null;
+  }
+  return response.json();
+}
