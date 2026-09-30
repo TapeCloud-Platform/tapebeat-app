@@ -17,6 +17,7 @@ import { findProfanity } from '../utils/profanity';
 import {
   REVIEW_TITLE_MAX,
   REVIEW_BODY_MAX,
+  REVIEW_EDIT_COOLDOWN_SECONDS,
   editCooldownRemaining,
   parseCooldownFromMessage,
 } from '../utils/reviewLimits';
@@ -98,10 +99,10 @@ export default function ReviewPanel({ contentId, onRegister, sessionUser, onLogi
       return undefined;
     }
     const review = reviews.find((item) => item.id === editingId);
-    setEditCooldown(editCooldownRemaining(review?.updatedAt || review?.createdAt));
+    setEditCooldown(editCooldownRemaining(review?.lastEditedAt));
     const timer = setInterval(() => {
       const current = reviews.find((item) => item.id === editingId);
-      setEditCooldown(editCooldownRemaining(current?.updatedAt || current?.createdAt));
+      setEditCooldown(editCooldownRemaining(current?.lastEditedAt));
     }, 1000);
     return () => clearInterval(timer);
   }, [editingId, reviews]);
@@ -180,7 +181,8 @@ export default function ReviewPanel({ contentId, onRegister, sessionUser, onLogi
       if (err.status === 429) {
         const wait = parseCooldownFromMessage(err.message);
         if (wait !== null) {
-          setEditCooldown(wait);
+          // Tope de seguridad: el conteo nunca supera el cooldown local.
+          setEditCooldown(Math.min(wait, REVIEW_EDIT_COOLDOWN_SECONDS));
         }
       }
       setEditError(err.message || 'No se pudo actualizar la reseña.');
