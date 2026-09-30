@@ -29,6 +29,7 @@ export default function StarRating({ value = 0, onChange, size = 'md' }) {
   const readOnly = !onChange;
   const [hoverValue, setHoverValue] = useState(null);
   const shown = hoverValue ?? value;
+  const optionValue = hoverValue != null ? hoverValue : value;
 
   if (readOnly) {
     return (
@@ -61,7 +62,6 @@ export default function StarRating({ value = 0, onChange, size = 'md' }) {
     >
       {[1, 2, 3, 4, 5].map((star) => {
         const v = starFill(shown, star);
-        const optionValue = hoverValue != null ? hoverValue : value;
         return (
           <button
             key={star}
