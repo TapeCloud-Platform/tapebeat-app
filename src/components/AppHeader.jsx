@@ -3,8 +3,8 @@ import { Button, SearchField } from '@heroui/react';
 import SettingsMenu from './SettingsMenu';
 import AppSwitcher from './AppSwitcher';
 import LoadingIcon from './LoadingIcon';
-import tapebeatIcon from '../assets/tapebeat-icon.png';
-import tapebeatIconLight from '../assets/tapebeat-icon-light.png';
+import tapebeatLogoLight from '../assets/tapebeat-logo-light.png';
+import tapebeatLogoDark from '../assets/tapebeat-logo-dark.png';
 
 const NAV_GENRE_COUNT = 8;
 
@@ -47,7 +47,7 @@ export default function AppHeader({
   const [highlight, setHighlight] = useState(-1);
   const inputRef = useRef(null);
 
-  const logoSrc = theme === 'light' ? tapebeatIconLight : tapebeatIcon;
+  const logoSrc = theme === 'light' ? tapebeatLogoLight : tapebeatLogoDark;
 
   useEffect(() => {
     if (!searchOpen) {
