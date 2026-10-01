@@ -50,3 +50,66 @@ export async function getAlbumDetail(sourceApp, artist, album) {
   }
   return response.json();
 }
+
+/** Búsqueda pública de usuarios (nombre visible + avatar, sin emails). */
+export async function searchUsers(query, limit = 4) {
+  const q = (query || '').trim();
+  if (q.length < 2) {
+    return [];
+  }
+  const response = await fetch(`${API_URL}/api/users/search?${new URLSearchParams({ q })}`);
+  if (!response.ok) {
+    return [];
+  }
+  const users = await response.json().catch(() => []);
+  return (Array.isArray(users) ? users : []).slice(0, limit).map((u) => ({
+    externalId: `user:${u.username}`,
+    title: u.displayName || u.username,
+    subtitle: `@${u.username}`,
+    description: 'Usuario de TapeCloud',
+    imageUrl: u.avatarDataUri || null,
+    genre: u.username,
+    kind: 'user',
+  }));
+}
+
+/**
+ * Búsqueda agrupada del header: canciones + artistas + álbumes + usuarios en paralelo.
+ * `discover(search)` ya trae artistas y canciones unificados; los álbumes van aparte.
+ */
+export async function searchAll(sourceApp, query, perGroup = 3) {
+  const q = (query || '').trim();
+  if (q.length < 2) {
+    return { groups: [], flat: [] };
+  }
+  const [unified, albums, users] = await Promise.all([
+    discover(sourceApp, { type: 'search', value: q, limit: perGroup * 2 }).catch(() => []),
+    discover(sourceApp, { type: 'album', value: q, limit: perGroup }).catch(() => []),
+    searchUsers(q, perGroup),
+  ]);
+  const artists = unified.filter((item) => item.kind === 'artist').slice(0, perGroup);
+  const tracks = unified.filter((item) => item.kind !== 'artist').slice(0, perGroup);
+  const groups = [];
+  if (tracks.length > 0) {
+    groups.push({ key: 'tracks', label: 'Canciones', items: tracks });
+  }
+  if (artists.length > 0) {
+    groups.push({ key: 'artists', label: 'Artistas', items: artists });
+  }
+  if (albums.length > 0) {
+    groups.push({ key: 'albums', label: 'Álbumes', items: albums.slice(0, perGroup) });
+  }
+  if (users.length > 0) {
+    groups.push({ key: 'users', label: 'Usuarios', items: users });
+  }
+  return { groups, flat: groups.flatMap((g) => g.items) };
+}
+
+/** Perfil público de un usuario (stats de reseñas, sin email). */
+export async function getUserProfile(username) {
+  const response = await fetch(`${API_URL}/api/users/${encodeURIComponent(username)}/profile`);
+  if (!response.ok) {
+    return null;
+  }
+  return response.json();
+}

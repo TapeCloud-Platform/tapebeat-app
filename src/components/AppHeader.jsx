@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button, SearchField } from '@heroui/react';
 import SettingsMenu from './SettingsMenu';
 import AppSwitcher from './AppSwitcher';
@@ -6,7 +6,20 @@ import LoadingIcon from './LoadingIcon';
 import tapebeatIcon from '../assets/tapebeat-icon.png';
 import tapebeatIconLight from '../assets/tapebeat-icon-light.png';
 
-const NAV_GENRE_COUNT = 6;
+const NAV_GENRE_COUNT = 8;
+
+function normalizeSuggestions(suggestions) {
+  if (!suggestions) {
+    return { groups: [], flat: [] };
+  }
+  if (Array.isArray(suggestions)) {
+    return { groups: suggestions.length > 0 ? [{ key: 'all', label: null, items: suggestions }] : [], flat: suggestions };
+  }
+  if (suggestions.groups) {
+    return { groups: suggestions.groups, flat: suggestions.flat ?? suggestions.groups.flatMap((g) => g.items) };
+  }
+  return { groups: [], flat: [] };
+}
 
 export default function AppHeader({
   appName,
@@ -20,6 +33,9 @@ export default function AppHeader({
   suggestions,
   onOpenMenu,
   onHome,
+  onSelectArtist,
+  onSelectAlbum,
+  onSelectUser,
   theme,
   onThemeChange,
   filters,
@@ -28,34 +44,85 @@ export default function AppHeader({
 }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [highlight, setHighlight] = useState(-1);
+  const inputRef = useRef(null);
+
+  const logoSrc = theme === 'light' ? tapebeatIconLight : tapebeatIcon;
 
   useEffect(() => {
     if (!searchOpen) {
       setQuery('');
+      setHighlight(-1);
       onSearchPreview?.('');
     }
   }, [searchOpen]);
 
   useEffect(() => {
     onSearchPreview?.(query.trim());
+    setHighlight(-1);
   }, [query]);
 
+  const { groups, flat } = useMemo(() => normalizeSuggestions(suggestions), [suggestions]);
+  const showSuggestions = (searchOpen || query.trim().length >= 2) && query.trim().length >= 2;
+  const isLoading = suggestions === null;
+
+  const genreFilter = filters?.find((filter) => filter.type === 'genre');
+  const navGenres = genreFilter?.options.slice(0, NAV_GENRE_COUNT) ?? [];
+
   function submitSearch(event) {
-    event.preventDefault();
+    event?.preventDefault();
+    if (highlight >= 0 && flat[highlight]) {
+      selectItem(flat[highlight]);
+      return;
+    }
     if (query.trim()) {
       onSearch(query.trim());
       setSearchOpen(false);
+      inputRef.current?.blur();
     }
   }
 
-  function selectSuggestion(item) {
-    onSearch(item.title);
+  function selectItem(item) {
     setSearchOpen(false);
+    setQuery('');
+    if (item.kind === 'artist' && onSelectArtist) {
+      onSelectArtist(item);
+      return;
+    }
+    if (item.kind === 'album' && onSelectAlbum) {
+      onSelectAlbum(item);
+      return;
+    }
+    if (item.kind === 'user' && onSelectUser) {
+      onSelectUser(item);
+      return;
+    }
+    onSearch(item.title);
   }
 
-  const showSuggestions = searchOpen && query.trim().length >= 2;
-  const genreFilter = filters?.find((filter) => filter.type === 'genre');
-  const navGenres = genreFilter?.options.slice(0, NAV_GENRE_COUNT) ?? [];
+  function handleKeyDown(event) {
+    if (event.key === 'ArrowDown' && flat.length > 0) {
+      event.preventDefault();
+      setHighlight((h) => (h + 1) % flat.length);
+    } else if (event.key === 'ArrowUp' && flat.length > 0) {
+      event.preventDefault();
+      setHighlight((h) => (h <= 0 ? flat.length - 1 : h - 1));
+    } else if (event.key === 'Escape') {
+      if (query) {
+        setQuery('');
+      } else {
+        setSearchOpen(false);
+      }
+    }
+  }
+
+  function kindLabel(kind) {
+    if (kind === 'artist') return 'Artista';
+    if (kind === 'album') return 'Álbum';
+    if (kind === 'user') return 'Usuario';
+    if (kind === 'single') return 'Single';
+    return null;
+  }
 
   return (
     <header className="app-header">
@@ -72,76 +139,121 @@ export default function AppHeader({
 
           <button
             type="button"
-            className="icon-button app-header__hamburger"
+            className="app-header__explore"
             onClick={onOpenMenu}
-            aria-label="Abrir categorías"
+            aria-label="Abrir menú de exploración"
           >
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
               <line x1="3" y1="6" x2="21" y2="6" strokeLinecap="round" />
               <line x1="3" y1="12" x2="21" y2="12" strokeLinecap="round" />
               <line x1="3" y1="18" x2="21" y2="18" strokeLinecap="round" />
             </svg>
+            <span>Explorar</span>
           </button>
         </div>
 
         <button type="button" className="app-header__brand" onClick={onHome} aria-label="Volver al inicio">
-          <img
-            className="app-header__logo"
-            src={theme === 'light' ? tapebeatIconLight : tapebeatIcon}
-            alt={appName}
-          />
-          <span className="app-header__wordmark">{appName}</span>
+          <img className="app-header__logo" src={logoSrc} alt="" aria-hidden="true" />
+          <span className="app-header__brand-text">
+            <span className="app-header__wordmark">{appName}</span>
+            <span className="app-header__tagline">{tagline}</span>
+          </span>
         </button>
 
         <div className="app-header__actions">
-          {searchOpen && (
-            <form className="header-search" onSubmit={submitSearch}>
-              <SearchField aria-label="Buscar" value={query} onChange={setQuery}>
-                <SearchField.Group>
-                  <SearchField.SearchIcon />
-                  <SearchField.Input
-                    autoFocus
-                    placeholder="Buscar..."
-                    onBlur={() => {
-                      if (!query) setSearchOpen(false);
-                    }}
-                  />
-                  <SearchField.ClearButton />
-                </SearchField.Group>
-              </SearchField>
+          <form className={`header-search ${searchOpen ? 'is-open' : ''}`} onSubmit={submitSearch} role="search">
+            <SearchField aria-label="Buscar" value={query} onChange={setQuery}>
+              <SearchField.Group>
+                <SearchField.SearchIcon />
+                <SearchField.Input
+                  ref={inputRef}
+                  placeholder="Buscar canciones, artistas, álbumes..."
+                  onFocus={() => setSearchOpen(true)}
+                  onBlur={() => {
+                    if (!query) setSearchOpen(false);
+                  }}
+                  onKeyDown={handleKeyDown}
+                  role="combobox"
+                  aria-expanded={showSuggestions}
+                  aria-controls="header-search-listbox"
+                />
+                <SearchField.ClearButton />
+              </SearchField.Group>
+            </SearchField>
 
-              {showSuggestions && (
-                <ul className="header-search__suggestions">
-                  {suggestions === null ? (
-                    <li className="header-search__loading">
-                      <LoadingIcon size={14} /> Buscando...
-                    </li>
-                  ) : suggestions.length > 0 ? (
-                    suggestions.map((item) => (
-                      <li key={item.externalId}>
-                        <button type="button" onMouseDown={() => selectSuggestion(item)}>
-                          {item.imageUrl && <img src={item.imageUrl} alt="" aria-hidden="true" />}
-                          <span>
-                            <strong>{item.title}</strong>
-                            {item.subtitle && <small>{item.subtitle}</small>}
-                          </span>
-                        </button>
-                      </li>
-                    ))
-                  ) : (
-                    <li className="header-search__empty">Sin resultados similares.</li>
-                  )}
-                </ul>
-              )}
-            </form>
-          )}
+            {showSuggestions && (
+              <div className="header-search__panel" id="header-search-listbox" role="listbox">
+                {isLoading ? (
+                  <p className="header-search__loading">
+                    <LoadingIcon size={14} /> Buscando...
+                  </p>
+                ) : flat.length > 0 ? (
+                  <>
+                    {groups.map((group) => (
+                      <section key={group.key} className="header-search__group">
+                        {group.label && <h4 className="header-search__group-title">{group.label}</h4>}
+                        <ul className="header-search__group-list">
+                          {group.items.map((item) => {
+                            const flatIndex = flat.indexOf(item);
+                            return (
+                              <li key={`${group.key}-${item.externalId}`}>
+                                <button
+                                  type="button"
+                                  role="option"
+                                  aria-selected={flatIndex === highlight}
+                                  className={flatIndex === highlight ? 'is-highlight' : ''}
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    selectItem(item);
+                                  }}
+                                  onMouseEnter={() => setHighlight(flatIndex)}
+                                >
+                                  {item.imageUrl ? (
+                                    <img src={item.imageUrl} alt="" aria-hidden="true" />
+                                  ) : (
+                                    <span className="header-search__fallback" aria-hidden="true">
+                                      {(item.title || '?')[0]?.toUpperCase()}
+                                    </span>
+                                  )}
+                                  <span>
+                                    <strong>{item.title}</strong>
+                                    {item.subtitle && <small>{item.subtitle}</small>}
+                                  </span>
+                                  {kindLabel(item.kind) && (
+                                    <span className="header-search__kind">{kindLabel(item.kind)}</span>
+                                  )}
+                                </button>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </section>
+                    ))}
+                    <button
+                      type="button"
+                      className="header-search__see-all"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        submitSearch();
+                      }}
+                    >
+                      Ver todos los resultados para “{query.trim()}”
+                    </button>
+                  </>
+                ) : (
+                  <p className="header-search__empty">Sin resultados. Probá con otro nombre.</p>
+                )}
+              </div>
+            )}
+          </form>
 
           <Button
             isIconOnly
             variant="ghost"
-            className="icon-button"
+            className="icon-button header-search__toggle"
             onClick={() => setSearchOpen((open) => !open)}
             aria-label="Buscar"
+            aria-expanded={searchOpen}
           >
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="11" cy="11" r="7" />
@@ -149,7 +261,7 @@ export default function AppHeader({
             </svg>
           </Button>
 
-          <AppSwitcher current="tapebeat" theme={theme} logoSrc={theme === 'light' ? tapebeatIconLight : tapebeatIcon} appName="TapeBeat" />
+          <AppSwitcher current="tapebeat" theme={theme} logoSrc={logoSrc} appName="TapeBeat" />
         </div>
       </div>
 
