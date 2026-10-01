@@ -1,7 +1,7 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 export async function getFilters(sourceApp) {
-  const response = await fetch(`${API_URL}/api/discover/${sourceApp}/filters`);
+  const response = await fetch(`${API_URL}/api/discover/${sourceApp}/filters`, { credentials: 'include' });
   if (!response.ok) {
     throw new Error('No se pudieron cargar los filtros.');
   }
@@ -14,7 +14,7 @@ export async function discover(sourceApp, { type = 'top', value = '', limit = 30
     params.set('value', value);
   }
 
-  const response = await fetch(`${API_URL}/api/discover/${sourceApp}?${params}`);
+  const response = await fetch(`${API_URL}/api/discover/${sourceApp}?${params}`, { credentials: 'include' });
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
     throw new Error(body.message || 'No se pudo cargar el contenido.');
@@ -24,7 +24,7 @@ export async function discover(sourceApp, { type = 'top', value = '', limit = 30
 
 export async function getProfile(sourceApp, name) {
   const params = new URLSearchParams({ value: name });
-  const response = await fetch(`${API_URL}/api/discover/${sourceApp}/profile?${params}`);
+  const response = await fetch(`${API_URL}/api/discover/${sourceApp}/profile?${params}`, { credentials: 'include' });
   if (!response.ok) {
     return null;
   }
@@ -34,7 +34,7 @@ export async function getProfile(sourceApp, name) {
 /** Álbum de origen de una canción (nombre, portada y descripción, si el backend los tiene). */
 export async function getTrackDetail(sourceApp, artist, track) {
   const params = new URLSearchParams({ artist, track });
-  const response = await fetch(`${API_URL}/api/discover/${sourceApp}/track?${params}`);
+  const response = await fetch(`${API_URL}/api/discover/${sourceApp}/track?${params}`, { credentials: 'include' });
   if (!response.ok) {
     return null;
   }
@@ -44,7 +44,7 @@ export async function getTrackDetail(sourceApp, artist, track) {
 /** Ficha de un álbum (portada, descripción, lista de temas), sin pasar por una canción puntual. */
 export async function getAlbumDetail(sourceApp, artist, album) {
   const params = new URLSearchParams({ artist, album });
-  const response = await fetch(`${API_URL}/api/discover/${sourceApp}/album?${params}`);
+  const response = await fetch(`${API_URL}/api/discover/${sourceApp}/album?${params}`, { credentials: 'include' });
   if (!response.ok) {
     return null;
   }
@@ -57,7 +57,7 @@ export async function searchUsers(query, limit = 4) {
   if (q.length < 2) {
     return [];
   }
-  const response = await fetch(`${API_URL}/api/users/search?${new URLSearchParams({ q })}`);
+  const response = await fetch(`${API_URL}/api/users/search?${new URLSearchParams({ q })}`, { credentials: 'include' });
   if (!response.ok) {
     return [];
   }
@@ -107,7 +107,7 @@ export async function searchAll(sourceApp, query, perGroup = 3) {
 
 /** Perfil público de un usuario (stats de reseñas, sin email). */
 export async function getUserProfile(username) {
-  const response = await fetch(`${API_URL}/api/users/${encodeURIComponent(username)}/profile`);
+  const response = await fetch(`${API_URL}/api/users/${encodeURIComponent(username)}/profile`, { credentials: 'include' });
   if (!response.ok) {
     return null;
   }
