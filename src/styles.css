@@ -3896,6 +3896,8 @@ body {
 .app-header__nav-more {
   border-style: dashed;
   border-color: var(--border);
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 /* Búsqueda: input visible en desktop, panel agrupado más grande */
