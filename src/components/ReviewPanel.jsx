@@ -13,7 +13,7 @@ import {
 import StarRating from './StarRating';
 import AlreadyReviewedDialog from './AlreadyReviewedDialog';
 import ConfirmDialog from './ConfirmDialog';
-import { PencilIcon, TrashIcon } from './icons';
+import { PencilIcon, TrashIcon, EyeIcon, EyeOffIcon, HeartIcon, MessageIcon } from './icons';
 import { findProfanity } from '../utils/profanity';
 import {
   REVIEW_TITLE_MAX,
@@ -273,12 +273,21 @@ export default function ReviewPanel({ contentId, onRegister, sessionUser, onLogi
             {reviews.map((review) => (
               <article key={review.id} className="review-card">
                 <div className="review-header">
-                  <strong>
-                    {review.title}
-                    {review.isSpoiler && <span className="spoiler-badge">Spoiler</span>}
-                  </strong>
+                  <strong>{review.title}</strong>
                   <div className="modal-review-actions">
-                    <span className="review-rating">⭐ {Number(review.rating).toFixed(1)}/5</span>
+                    {review.isSpoiler && (
+                      <button
+                        type="button"
+                        className={`spoiler-toggle${revealedSpoilers[review.id] ? ' is-revealed' : ''}`}
+                        onClick={() => setRevealedSpoilers((current) => ({ ...current, [review.id]: !current[review.id] }))}
+                        aria-pressed={Boolean(revealedSpoilers[review.id])}
+                        title={revealedSpoilers[review.id] ? 'Ocultar spoiler' : 'Mostrar spoiler'}
+                      >
+                        {revealedSpoilers[review.id] ? <EyeIcon size={14} /> : <EyeOffIcon size={14} />}
+                        <span>{revealedSpoilers[review.id] ? 'Ocultar' : 'Spoiler'}</span>
+                      </button>
+                    )}
+                    <span className="review-rating">★ {Number(review.rating).toFixed(1)}/5</span>
                     {review.ownedByCurrentUser && editingId !== review.id && (
                       <>
                         <button
@@ -376,15 +385,6 @@ export default function ReviewPanel({ contentId, onRegister, sessionUser, onLogi
                 ) : (
                   <>
                     <p className={review.isSpoiler && !revealedSpoilers[review.id] ? 'review-body review-body--spoiler is-blurred' : 'review-body'}>{review.body}</p>
-                    {review.isSpoiler && (
-                      <button
-                        type="button"
-                        className="spoiler-reveal-btn"
-                        onClick={() => setRevealedSpoilers((current) => ({ ...current, [review.id]: !current[review.id] }))}
-                      >
-                        {revealedSpoilers[review.id] ? 'Ocultar spoiler' : 'Mostrar spoiler'}
-                      </button>
-                    )}
                   </>
                 )}
                 <small className="review-author">Por: {review.authorDisplayName || 'Anónimo'}</small>
@@ -396,10 +396,10 @@ export default function ReviewPanel({ contentId, onRegister, sessionUser, onLogi
                     onClick={() => handleToggleLike(review.id)}
                     disabled={!sessionUser}
                   >
-                    ♥ {review.likesCount ?? 0}
+                    <HeartIcon size={15} filled={review.likedByCurrentUser} /> {review.likesCount ?? 0}
                   </button>
                   <button type="button" className="comments-toggle-btn" onClick={() => toggleComments(review.id)}>
-                    💬 {review.commentsCount ?? 0} comentarios
+                    <MessageIcon size={15} /> {review.commentsCount ?? 0} comentarios
                   </button>
                 </div>
 

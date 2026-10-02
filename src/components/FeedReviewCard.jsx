@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import StarRating from './StarRating';
+import { HeartIcon, MessageIcon } from './icons';
 
 const COLLAPSE_LIMIT = 280;
 
@@ -44,8 +45,8 @@ export default function FeedReviewCard({ review, onOpen }) {
           {review.authorDisplayName || 'Anónimo'}
         </span>
         <span className="feed-review__counts">
-          <span>♥ {review.likesCount ?? 0}</span>
-          <span>💬 {review.commentsCount ?? 0}</span>
+          <span class="feed-review__count"><HeartIcon size={14} filled /> {review.likesCount ?? 0}</span>
+          <span class="feed-review__count"><MessageIcon size={14} /> {review.commentsCount ?? 0}</span>
         </span>
       </div>
     </article>
