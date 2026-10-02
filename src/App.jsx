@@ -14,6 +14,7 @@ import ArtistPage from './components/ArtistPage';
 import AlbumDetailPage from './components/AlbumDetailPage';
 import UserProfilePage from './components/UserProfilePage';
 import AuthModal from './components/AuthModal';
+import Footer from './components/Footer';
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
 import { discover, getFilters, searchAll } from './discoverApi';
@@ -340,6 +341,8 @@ export default function App() {
           )}
         </AuthModal>
       )}
+
+      <Footer theme={theme} />
     </Router>
   );
 }
