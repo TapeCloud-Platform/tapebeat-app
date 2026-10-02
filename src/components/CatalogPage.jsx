@@ -227,6 +227,8 @@ export default function CatalogPage({
             <div className="explore-filters">
               <select
                 className="explore-select"
+                id="explore-genre"
+                name="genre"
                 value=""
                 onChange={(event) => event.target.value && onApplyFilter({ type: 'genre', value: event.target.value })}
                 aria-label="Género"
@@ -241,6 +243,8 @@ export default function CatalogPage({
 
               <select
                 className="explore-select"
+                id="explore-country"
+                name="country"
                 value=""
                 onChange={(event) => event.target.value && onApplyFilter({ type: 'country', value: event.target.value })}
                 aria-label="País"
@@ -260,6 +264,8 @@ export default function CatalogPage({
                 </svg>
                 <input
                   type="search"
+                  id="explore-search"
+                  name="q"
                   placeholder="Buscar música..."
                   value={searchDraft}
                   onChange={(event) => setSearchDraft(event.target.value)}

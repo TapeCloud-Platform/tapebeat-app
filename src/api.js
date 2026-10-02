@@ -263,8 +263,9 @@ export async function getMe() {
 }
 
 /**
- * Valida la sesión contra el backend (cookie). Devuelve false solo con 401.
- * Con error de red se asume válida para no cerrar sesiones por estar offline.
+ * Valida la sesión contra el backend (cookie). Solo un 2xx significa sesión
+ * válida (sin cookie el backend responde 403, no 401). Con error de red se
+ * asume válida para no cerrar sesiones por estar offline.
  */
 export async function checkSession() {
   let response;
@@ -273,5 +274,5 @@ export async function checkSession() {
   } catch {
     return true;
   }
-  return response.status !== 401;
+  return response.ok;
 }
