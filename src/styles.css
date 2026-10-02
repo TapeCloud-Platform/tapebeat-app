@@ -3098,17 +3098,23 @@ h1, h2, h3, p {
 }
 
 .delete-comment-btn {
+  display: inline-grid;
+  place-items: center;
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 0.85rem;
+  color: var(--text-tertiary);
   margin-left: auto;
-  opacity: 0.7;
-  padding: 0;
+  opacity: 0.85;
+  padding: 4px;
+  border-radius: 8px;
+  transition: opacity 0.2s ease, color 0.2s ease;
 }
 
 .delete-comment-btn:hover {
   opacity: 1;
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.12);
 }
 
 .comment-item-body {
@@ -3164,31 +3170,41 @@ h1, h2, h3, p {
 }
 
 .delete-review-btn {
+  display: inline-grid;
+  place-items: center;
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 1rem;
-  opacity: 0.7;
-  transition: opacity 0.2s ease;
-  padding: 2px 4px;
+  color: var(--text-tertiary);
+  opacity: 0.85;
+  transition: opacity 0.2s ease, color 0.2s ease;
+  padding: 4px;
+  border-radius: 8px;
 }
 
 .delete-review-btn:hover {
   opacity: 1;
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.12);
 }
 
 .edit-review-btn {
+  display: inline-grid;
+  place-items: center;
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 1rem;
-  opacity: 0.7;
-  transition: opacity 0.2s ease;
-  padding: 2px 4px;
+  color: var(--text-tertiary);
+  opacity: 0.85;
+  transition: opacity 0.2s ease, color 0.2s ease;
+  padding: 4px;
+  border-radius: 8px;
 }
 
 .edit-review-btn:hover {
   opacity: 1;
+  color: var(--ink);
+  background: var(--surface-bg-strong);
 }
 
 .char-count {
