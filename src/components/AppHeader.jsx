@@ -158,6 +158,7 @@ export default function AppHeader({
                 <SearchField.Input
                   ref={inputRef}
                   name="q"
+                  autoComplete="off"
                   placeholder="Buscar canciones, artistas, álbumes..."
                   onFocus={() => setSearchOpen(true)}
                   onBlur={() => {

@@ -229,6 +229,7 @@ export default function CatalogPage({
                 className="explore-select"
                 id="explore-genre"
                 name="genre"
+                autoComplete="off"
                 value=""
                 onChange={(event) => event.target.value && onApplyFilter({ type: 'genre', value: event.target.value })}
                 aria-label="Género"
@@ -245,6 +246,7 @@ export default function CatalogPage({
                 className="explore-select"
                 id="explore-country"
                 name="country"
+                autoComplete="off"
                 value=""
                 onChange={(event) => event.target.value && onApplyFilter({ type: 'country', value: event.target.value })}
                 aria-label="País"
@@ -266,6 +268,7 @@ export default function CatalogPage({
                   type="search"
                   id="explore-search"
                   name="q"
+                  autoComplete="off"
                   placeholder="Buscar música..."
                   value={searchDraft}
                   onChange={(event) => setSearchDraft(event.target.value)}
