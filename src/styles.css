@@ -3421,17 +3421,19 @@ h1, h2, h3, p {
 
 .top-slider__item {
   position: relative;
-  flex: 0 0 168px;
+  flex: 0 0 196px;
   scroll-snap-align: start;
 }
 
 .top-slider__item .movie-card--hero {
-  flex: 0 0 168px;
+  flex: none;
+  width: 100%;
 }
 
 .top-slider__item .movie-card--hero .poster-container {
-  width: 168px;
-  height: 168px;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
 }
 
 .top-slider__item .movie-card--hero h3 {
