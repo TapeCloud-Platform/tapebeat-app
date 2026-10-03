@@ -35,7 +35,6 @@ export default function CatalogPage({
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState(getStoredViewMode);
   const [reviews, setReviews] = useState([]);
-  const [searchDraft, setSearchDraft] = useState('');
   const isFiltered = active.type !== 'top';
   const activeLabelText = activeLabel
     ?? activeFilter?.options?.find((option) => option.value === active.value)?.label
@@ -101,16 +100,6 @@ export default function CatalogPage({
       .sort((a, b) => b.reviews - a.reviews || b.likes - a.likes)
       .slice(0, POPULAR_REVIEWERS_LIMIT);
   }, [reviews]);
-
-  const genreOptions = filters?.find((filter) => filter.type === 'genre')?.options ?? [];
-  const countryOptions = filters?.find((filter) => filter.type === 'country')?.options ?? [];
-
-  function submitSearch(event) {
-    event.preventDefault();
-    if (searchDraft.trim()) {
-      onApplyFilter({ type: 'search', value: searchDraft.trim() });
-    }
-  }
 
   const artists = items.filter((item) => item.kind === 'artist');
   const tracks = items
@@ -226,58 +215,6 @@ export default function CatalogPage({
           </>
         ) : (
           <>
-            <div className="explore-filters">
-              <select
-                className="explore-select"
-                id="explore-genre"
-                name="genre"
-                autoComplete="off"
-                value=""
-                onChange={(event) => event.target.value && onApplyFilter({ type: 'genre', value: event.target.value })}
-                aria-label="Género"
-              >
-                <option value="">Género</option>
-                {genreOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                className="explore-select"
-                id="explore-country"
-                name="country"
-                autoComplete="off"
-                value=""
-                onChange={(event) => event.target.value && onApplyFilter({ type: 'country', value: event.target.value })}
-                aria-label="País"
-              >
-                <option value="">País</option>
-                {countryOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-
-              <form className="explore-search" onSubmit={submitSearch}>
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="11" cy="11" r="7" />
-                  <line x1="16.5" y1="16.5" x2="21" y2="21" strokeLinecap="round" />
-                </svg>
-                <input
-                  type="search"
-                  id="explore-search"
-                  name="q"
-                  autoComplete="off"
-                  placeholder="Buscar música..."
-                  value={searchDraft}
-                  onChange={(event) => setSearchDraft(event.target.value)}
-                />
-              </form>
-            </div>
-
             <TopSlider title="Populares esta semana" tracks={hero} />
 
             {recentlyReviewed.length > 0 && (
