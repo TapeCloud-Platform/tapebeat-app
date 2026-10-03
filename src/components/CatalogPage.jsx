@@ -28,6 +28,7 @@ export default function CatalogPage({
   activeFilter,
   active,
   filters,
+  activeLabel,
   onApplyFilter,
   onClearFilters,
 }) {
@@ -36,7 +37,8 @@ export default function CatalogPage({
   const [reviews, setReviews] = useState([]);
   const [searchDraft, setSearchDraft] = useState('');
   const isFiltered = active.type !== 'top';
-  const activeLabel = activeFilter?.options?.find((option) => option.value === active.value)?.label
+  const activeLabelText = activeLabel
+    ?? activeFilter?.options?.find((option) => option.value === active.value)?.label
     ?? active.value;
 
   function changeViewMode(mode) {
@@ -139,7 +141,7 @@ export default function CatalogPage({
     <main className="app-main">
       <section className="section-block">
         <div className="section-header">
-          <h2>{activeFilter?.label ?? 'Contenido'}</h2>
+          <h2>{active.type === 'combined' ? 'Resultados' : (activeFilter?.label ?? 'Contenido')}</h2>
           {!loading && <span className="count-badge">{tracks.length} resultados</span>}
 
           {isFiltered && (
@@ -152,7 +154,7 @@ export default function CatalogPage({
               onClick={onClearFilters}
               onKeyDown={(event) => event.key === 'Enter' && onClearFilters()}
             >
-              {activeLabel}
+              {activeLabelText}
               <span aria-hidden="true">✕</span>
             </Chip>
           )}
