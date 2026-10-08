@@ -6,8 +6,6 @@ import LoadingIcon from './LoadingIcon';
 import tapebeatLogoLight from '../assets/tapebeat-logo-light.png';
 import tapebeatLogoDark from '../assets/tapebeat-logo-dark.png';
 
-const NAV_GENRE_COUNT = 8;
-
 function normalizeSuggestions(suggestions) {
   if (!suggestions) {
     return { groups: [], flat: [] };
@@ -39,6 +37,7 @@ export default function AppHeader({
   theme,
   onThemeChange,
   filters,
+  navGenres = [],
   active,
   onApplyFilter,
 }) {
@@ -65,9 +64,6 @@ export default function AppHeader({
   const { groups, flat } = useMemo(() => normalizeSuggestions(suggestions), [suggestions]);
   const showSuggestions = (searchOpen || query.trim().length >= 2) && query.trim().length >= 2;
   const isLoading = suggestions === null;
-
-  const genreFilter = filters?.find((filter) => filter.type === 'genre');
-  const navGenres = genreFilter?.options.slice(0, NAV_GENRE_COUNT) ?? [];
 
   function submitSearch(event) {
     event?.preventDefault();

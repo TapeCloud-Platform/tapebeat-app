@@ -29,6 +29,7 @@ export default function CatalogPage({
   activeFilter,
   active,
   filters,
+  navGenres = [],
   activeLabel,
   onApplyFilter,
   onClearFilters,
@@ -134,17 +135,16 @@ export default function CatalogPage({
   const hero = tracks.slice(0, 10);
   const more = tracks.slice(10, 19);
 
-  const genreFilter = filters.find((filter) => filter.type === 'genre');
-  const homeGenres = genreFilter?.options?.slice(0, 5) ?? [];
+  const homeGenres = navGenres.slice(0, 5);
 
   return (
     <main className="app-main">
       <section className="section-block">
-        <div className="section-header">
-          <h2>{active.type === 'combined' ? 'Resultados' : (activeFilter?.label ?? 'Contenido')}</h2>
-          {!loading && <span className="count-badge">{tracks.length} resultados</span>}
+        {isFiltered && (
+          <div className="section-header">
+            <h2>{active.type === 'combined' ? 'Resultados' : (activeFilter?.label ?? 'Contenido')}</h2>
+            {!loading && <span className="count-badge">{tracks.length} resultados</span>}
 
-          {isFiltered && (
             <Chip
               color="accent"
               variant="soft"
@@ -157,9 +157,7 @@ export default function CatalogPage({
               {activeLabelText}
               <span aria-hidden="true">✕</span>
             </Chip>
-          )}
 
-          {isFiltered && (
             <div className="view-toggle" role="group" aria-label="Estilo de resultados">
               <button
                 type="button"
@@ -189,8 +187,8 @@ export default function CatalogPage({
                 </svg>
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {error && <p className="error">{error}</p>}
 
