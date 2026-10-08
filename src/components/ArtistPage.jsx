@@ -161,6 +161,12 @@ export default function ArtistPage({ sessionUser, onLoginClick }) {
     navigate(`/track/${encodeURIComponent(track.externalId)}`, { state: { track } });
   }
 
+  function openAlbum(album) {
+    navigate(
+      `/album/${encodeURIComponent(album.genre || decodedName)}/${encodeURIComponent(album.title)}`
+    );
+  }
+
   async function handleRegisterArtist() {
     const registered = await registerContent(
       token,
@@ -223,7 +229,20 @@ export default function ArtistPage({ sessionUser, onLoginClick }) {
 
   function renderAlbumCard(album) {
     return (
-      <article key={album.externalId} className="movie-card album-card">
+      <article
+        key={album.externalId}
+        className="movie-card album-card album-card--clickable"
+        onClick={() => openAlbum(album)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            openAlbum(album);
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        title={album.title}
+      >
         <div className="poster-container">
           {album.imageUrl ? (
             <img
