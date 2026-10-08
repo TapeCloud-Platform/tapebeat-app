@@ -399,40 +399,6 @@ export default function AlbumDetailPage({ sessionUser, onLoginClick }) {
               </div>
             </div>
 
-            {tracks.length > 0 && (
-              <div className="entity-sidebar__panel">
-                <h3>Del álbum · {tracks.length}</h3>
-                <div className="tracklist tracklist--mini">
-                  {(showAllTracks ? tracks : tracks.slice(0, 5)).map((name, index) => (
-                    <button
-                      key={`${name}-${index}`}
-                      type="button"
-                      className={`tracklist-item tracklist-item--clickable ${
-                        currentTrack && name.toLowerCase() === currentTrack.toLowerCase()
-                          ? 'is-current'
-                          : ''
-                      }`}
-                      onClick={() => openTrack(name)}
-                    >
-                      <span className="tracklist-item__index">{index + 1}</span>
-                      <span className="tracklist-item__name">{name}</span>
-                    </button>
-                  ))}
-                </div>
-                {tracks.length > 5 && !showAllTracks && (
-                  <button
-                    type="button"
-                    className="section-header__more"
-                    onClick={() => {
-                      setTab('home');
-                      setShowAllTracks(true);
-                    }}
-                  >
-                    Ver tracklist completo
-                  </button>
-                )}
-              </div>
-            )}
           </aside>
         </div>
       </section>
