@@ -134,7 +134,7 @@ export default function ArtistPage({ sessionUser, onLoginClick }) {
   }, [profile]);
 
   const allReviews = useMemo(
-    () => topTracks.flatMap((track) => track.reviews.map((review) => ({ ...review, track }))),
+    () => topTracks.flatMap((track) => (track.reviews || []).map((review) => ({ ...review, track }))),
     [topTracks]
   );
 
