@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getUserProfile } from '../discoverApi';
 import { SkeletonUserProfile } from './Skeleton';
 
+const TAPEFLIX_URL = import.meta.env.VITE_TAPEFLIX_URL || 'http://localhost:5174';
+
 /** Perfil público con la misma estructura que la ficha de artista: hero, tabs y sidebar. */
 export default function UserProfilePage() {
   const { username } = useParams();
@@ -85,6 +87,45 @@ export default function UserProfilePage() {
   const shareText = `Mirá el perfil de ${displayName} en TapeCloud`;
   const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(window.location.href)}`;
 
+  // Reseña destacada: a dónde lleva y de qué app es.
+  const featuredApp = profile.mostLikedContentSourceApp || null;
+  const featuredAppKey = featuredApp === 'tapeflix' ? 'tapeflix' : 'tapebeat';
+  const featuredAppLabel = featuredApp === 'tapeflix' ? 'TapeFlix' : 'TapeBeat';
+
+  function featuredReviewPath() {
+    if (!profile.mostLikedReviewId) {
+      return null;
+    }
+    const id = encodeURIComponent(profile.mostLikedContentExternalId || '');
+    if (featuredApp === 'tapeflix') {
+      const sub = profile.mostLikedContentSourceType === 'person' ? 'person' : 'movie';
+      return `${TAPEFLIX_URL}/${sub}/${id}`;
+    }
+    // Mismo criterio que el feed: artista a su ficha, lo demás al tema.
+    if (profile.mostLikedContentSourceType === 'artist') {
+      return `/artist/${id}`;
+    }
+    if (profile.mostLikedContentSourceType === 'album') {
+      // La ficha de álbum necesita el artista, dato que el perfil no trae.
+      return null;
+    }
+    return `/track/${id}`;
+  }
+
+  const featuredPath = featuredReviewPath();
+  const featuredIsExternal = Boolean(featuredPath && featuredPath.startsWith('http'));
+
+  function openFeaturedReview() {
+    if (!featuredPath) {
+      return;
+    }
+    if (featuredIsExternal) {
+      window.open(featuredPath, '_blank', 'noopener');
+    } else {
+      navigate(featuredPath);
+    }
+  }
+
   return (
     <main className="app-main">
       <header className="topbar detail-topbar">
@@ -164,10 +205,34 @@ export default function UserProfilePage() {
           {profile.mostLikedReviewTitle && (
             <section className="section-block">
               <h2 className="subsection-title">Reseña con más me gusta</h2>
-              <div className="feed-review">
-                <p className="feed-review__title">“{profile.mostLikedReviewTitle}”</p>
-                <p className="feed-review__body">La reseña más votada por la comunidad de este usuario.</p>
-              </div>
+              {featuredPath ? (
+                <button
+                  type="button"
+                  className="feed-review feed-review--clickable"
+                  onClick={openFeaturedReview}
+                  title={featuredIsExternal ? `Abrir reseña en ${featuredAppLabel}` : 'Abrir reseña'}
+                >
+                  <span className="feed-review__top">
+                    <strong className="feed-review__title">“{profile.mostLikedReviewTitle}”</strong>
+                    <span className={`app-badge app-badge--${featuredAppKey}`}>
+                      {featuredAppLabel}
+                      {featuredIsExternal ? ' ↗' : ''}
+                    </span>
+                  </span>
+                  <span className="feed-review__meta">
+                    {profile.mostLikedReviewRating != null && (
+                      <>★ {Number(profile.mostLikedReviewRating).toFixed(1)}/5 · </>
+                    )}
+                    {profile.mostLikedContentTitle || 'Ver reseña'}
+                  </span>
+                  <span className="feed-review__body">La reseña más votada por la comunidad de este usuario.</span>
+                </button>
+              ) : (
+                <div className="feed-review">
+                  <p className="feed-review__title">“{profile.mostLikedReviewTitle}”</p>
+                  <p className="feed-review__body">La reseña más votada por la comunidad de este usuario.</p>
+                </div>
+              )}
             </section>
           )}
         </div>

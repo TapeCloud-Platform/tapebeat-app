@@ -4603,6 +4603,66 @@ button.tracklist-item {
   color: var(--text-secondary);
 }
 
+/* ===== Insignia de app (TapeBeat / TapeFlix) y tarjeta clicable ===== */
+.app-badge {
+  flex: none;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.app-badge--tapebeat {
+  background: rgba(45, 212, 191, 0.15);
+  border-color: rgba(45, 212, 191, 0.4);
+  color: #2dd4bf;
+}
+
+.app-badge--tapeflix {
+  background: rgba(248, 113, 113, 0.13);
+  border-color: rgba(248, 113, 113, 0.4);
+  color: #f87171;
+}
+
+:root[data-theme='light'] .app-badge--tapebeat {
+  color: #0d9488;
+}
+
+:root[data-theme='light'] .app-badge--tapeflix {
+  color: #dc2626;
+}
+
+.feed-review--clickable {
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.feed-review--clickable:hover {
+  border-color: var(--border);
+}
+
+.feed-review__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.feed-review__meta {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+}
+
 @media (max-width: 720px) {
   .skeleton--detail-cover,
   .skeleton--hero-cover {
