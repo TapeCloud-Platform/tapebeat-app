@@ -4,6 +4,7 @@ import { Chip } from '@heroui/react';
 import TrackCard from './TrackCard';
 import ArtistCard from './ArtistCard';
 import TopSlider from './TopSlider';
+import GenreRow from './GenreRow';
 import FeedReviewCard, { contentPath } from './FeedReviewCard';
 import { SkeletonCatalogHome, SkeletonCatalogResults } from './Skeleton';
 import { getReviews } from '../api';
@@ -125,6 +126,9 @@ export default function CatalogPage({
   const hero = tracks.slice(0, 10);
   const more = tracks.slice(10, 19);
 
+  const genreFilter = filters.find((filter) => filter.type === 'genre');
+  const homeGenres = genreFilter?.options?.slice(0, 5) ?? [];
+
   return (
     <main className="app-main">
       <section className="section-block">
@@ -214,6 +218,10 @@ export default function CatalogPage({
         ) : (
           <>
             <TopSlider title="Populares esta semana" tracks={hero} />
+
+            {homeGenres.map((genre) => (
+              <GenreRow key={genre.value} genre={genre} />
+            ))}
 
             {recentlyReviewed.length > 0 && (
               <div className="reviewed-block">

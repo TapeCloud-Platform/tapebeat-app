@@ -2839,6 +2839,12 @@ h1, h2, h3, p {
   color: var(--text-secondary);
 }
 
+/* Los campos de HeroUI no estiran solos: ancho completo con tope para no deformar */
+.review-form .review-field > * {
+  width: 100%;
+  max-width: 580px;
+}
+
 .review-field input,
 .review-field select,
 .review-field textarea {
@@ -3838,6 +3844,7 @@ body {
   align-items: center;
   gap: 6px;
   padding: 4px 20px 14px;
+  border-top: none;
   overflow-x: auto;
   scrollbar-width: none;
   scroll-padding: 0 20px;
@@ -3855,6 +3862,8 @@ body {
   color: var(--text-secondary);
   font-size: 0.92rem;
   font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.18s ease;
@@ -3874,6 +3883,7 @@ body {
 .app-header__nav-more {
   border-style: dashed;
   border-color: var(--border);
+  color: var(--text-secondary);
   margin-left: auto;
   flex-shrink: 0;
 }

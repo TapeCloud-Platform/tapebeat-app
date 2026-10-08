@@ -63,7 +63,7 @@ export function SkeletonCatalogResults({ count = 10, view = 'grid' }) {
   );
 }
 
-/** Inicio del catálogo: slider hero + tira de recién reseñado + sección partida. */
+/** Inicio del catálogo: slider hero + géneros + tira de recién reseñado + sección partida. */
 export function SkeletonCatalogHome() {
   return (
     <div role="status" aria-label="Cargando contenido">
@@ -81,6 +81,22 @@ export function SkeletonCatalogHome() {
           ))}
         </div>
       </div>
+
+      {[0, 1].map((row) => (
+        <div key={row} className="top-slider" aria-hidden="true">
+          <div className="top-slider__head">
+            <SkeletonBlock className="skeleton--line" style={{ width: 140, height: 16 }} />
+          </div>
+          <div className="top-slider__track">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <div key={index} className="top-slider__item">
+                <SkeletonBlock className="skeleton--poster" />
+                <SkeletonBlock className="skeleton--line" style={{ width: '80%' }} />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
 
       <div className="reviewed-block" aria-hidden="true">
         <div className="section-header">
