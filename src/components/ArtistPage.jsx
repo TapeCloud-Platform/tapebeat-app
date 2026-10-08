@@ -367,32 +367,9 @@ export default function ArtistPage({ sessionUser, onLoginClick }) {
                     </section>
                   )}
 
-                  {releases.length > 0 && (
-                    <section className="section-block">
-                      <div className="section-header">
-                        <h2>Discografía</h2>
-                        <button
-                          type="button"
-                          className="section-header__more"
-                          onClick={() => setTab('discography')}
-                        >
-                          Ver todo →
-                        </button>
-                      </div>
-                      <div className="cards-grid">{releases.slice(0, 8).map(renderAlbumCard)}</div>
-                    </section>
-                  )}
-
-                  {topReviews.length > 0 && (
-                    <section className="section-block">
-                      <h2 className="subsection-title">Reseñas destacadas</h2>
-                      <div className="review-list">{topReviews.map(renderReview)}</div>
-                    </section>
-                  )}
-
                   {(profile?.bio || profile?.tags?.length > 0) && (
                     <section className="section-block">
-                      <h2 className="subsection-title">Acerca de</h2>
+                      <h2 className="subsection-title">Sobre este artista</h2>
                       {profile?.tags?.length > 0 && (
                         <div className="artist-tags">
                           {profile.tags.map((tag) => (
@@ -403,6 +380,13 @@ export default function ArtistPage({ sessionUser, onLoginClick }) {
                         </div>
                       )}
                       {profile?.bio && <p className="artist-bio">{profile.bio}</p>}
+                    </section>
+                  )}
+
+                  {topReviews.length > 0 && (
+                    <section className="section-block">
+                      <h2 className="subsection-title">Reseñas destacadas</h2>
+                      <div className="review-list">{topReviews.map(renderReview)}</div>
                     </section>
                   )}
                 </>

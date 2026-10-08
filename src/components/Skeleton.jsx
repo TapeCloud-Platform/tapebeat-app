@@ -371,18 +371,15 @@ export function SkeletonArtistDetail() {
           </section>
 
           <section className="section-block">
-            <div className="section-header">
-              <SkeletonBlock className="skeleton--line" style={{ width: 140 }} />
-            </div>
-            <div className="cards-grid">
-              {Array.from({ length: 4 }).map((_, index) => (
-                <div key={index}>
-                  <SkeletonBlock className="skeleton--poster" />
-                  <SkeletonBlock className="skeleton--line" style={{ width: '80%' }} />
-                  <SkeletonBlock className="skeleton--line" style={{ width: '50%' }} />
-                </div>
+            <SkeletonBlock className="skeleton--line" style={{ width: 170, marginBottom: 14 }} />
+            <div className="artist-tags" aria-hidden="true">
+              {[90, 70, 110, 60].map((width, index) => (
+                <SkeletonBlock key={index} className="skeleton--pill" style={{ width, height: 26 }} />
               ))}
             </div>
+            <SkeletonBlock className="skeleton--line" style={{ width: '100%', marginTop: 16 }} />
+            <SkeletonBlock className="skeleton--line" style={{ width: '95%' }} />
+            <SkeletonBlock className="skeleton--line" style={{ width: '70%' }} />
           </section>
         </div>
 
