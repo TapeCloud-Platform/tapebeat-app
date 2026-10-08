@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { getUserProfile } from '../discoverApi';
 import { SkeletonUserProfile } from './Skeleton';
 
-/** Perfil público de un usuario de TapeCloud: avatar, nombre y stats de reseñas. */
+/** Perfil público con la misma estructura que la ficha de artista: hero, tabs y sidebar. */
 export default function UserProfilePage() {
   const { username } = useParams();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [linkCopied, setLinkCopied] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -42,6 +44,16 @@ export default function UserProfilePage() {
     };
   }, [username]);
 
+  function copyLink() {
+    navigator.clipboard
+      ?.writeText(window.location.href)
+      .then(() => {
+        setLinkCopied(true);
+        setTimeout(() => setLinkCopied(false), 2000);
+      })
+      .catch(() => {});
+  }
+
   if (loading) {
     return (
       <main className="app-main">
@@ -53,45 +65,147 @@ export default function UserProfilePage() {
   if (error || !profile) {
     return (
       <main className="app-main">
+        <header className="topbar detail-topbar">
+          <button type="button" className="back-button" onClick={() => navigate(-1)}>
+            ← Volver
+          </button>
+        </header>
         <p className="error">{error || 'Usuario no encontrado.'}</p>
       </main>
     );
   }
 
-  const initial = (profile.displayName || profile.username || '?')[0]?.toUpperCase();
+  const displayName = profile.displayName || profile.username || '?';
+  const initial = displayName[0]?.toUpperCase();
+  const tapebeatCount = profile.tapebeatReviews ?? 0;
+  const tapeflixCount = profile.tapeflixReviews ?? 0;
+  const totalCount = tapebeatCount + tapeflixCount;
+  const maxAppCount = Math.max(1, tapebeatCount, tapeflixCount);
+
+  const shareText = `Mirá el perfil de ${displayName} en TapeCloud`;
+  const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(window.location.href)}`;
 
   return (
     <main className="app-main">
-      <div className="user-menu__profile user-profile__head">
-        {profile.avatarDataUri ? (
-          <img
-            className="user-menu__avatar user-menu__avatar--large"
-            src={profile.avatarDataUri}
-            alt=""
-          />
-        ) : (
-          <span className="user-menu__avatar user-menu__avatar--large">{initial}</span>
-        )}
-        <div>
-          <h2 className="user-menu__name">{profile.displayName}</h2>
-          <p className="user-menu__email">@{profile.username}</p>
-        </div>
-      </div>
+      <header className="topbar detail-topbar">
+        <button type="button" className="back-button" onClick={() => navigate(-1)}>
+          ← Volver
+        </button>
+      </header>
 
-      <ul className="user-menu__list user-profile__stats">
-        <li>
-          <span>Reseña con más likes</span>
-          <strong>{profile.mostLikedReviewTitle || '-'}</strong>
-        </li>
-        <li>
-          <span>Reseñas en TapeFlix</span>
-          <strong>{profile.tapeflixReviews}</strong>
-        </li>
-        <li>
-          <span>Reseñas en TapeBeat</span>
-          <strong>{profile.tapebeatReviews}</strong>
-        </li>
-      </ul>
+      <section className="entity-hero">
+        <div className="entity-hero__left">
+          <div className="artist-profile-avatar">
+            {profile.avatarDataUri ? (
+              <img src={profile.avatarDataUri} alt={displayName} />
+            ) : (
+              <span>{initial}</span>
+            )}
+          </div>
+          <div className="user-profile__hero-text">
+            <p className="eyebrow">Perfil de TapeCloud</p>
+            <h1 className="entity-hero__name">{displayName}</h1>
+            <p className="user-menu__email">@{profile.username}</p>
+          </div>
+        </div>
+
+        <div className="entity-hero__right">
+          <div className="entity-hero__stats">
+            <div className="entity-hero__stat">
+              <strong>{tapebeatCount}</strong>
+              <span>TapeBeat</span>
+            </div>
+            <div className="entity-hero__stat">
+              <strong>{tapeflixCount}</strong>
+              <span>TapeFlix</span>
+            </div>
+            <div className="entity-hero__stat">
+              <strong>{totalCount}</strong>
+              <span>Reseñas</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <nav className="entity-tabs">
+        <button type="button" className="entity-tabs__item is-active">
+          Resumen
+        </button>
+      </nav>
+
+      <div className="entity-layout">
+        <div className="entity-main">
+          <section className="section-block">
+            <h2 className="subsection-title">Actividad</h2>
+            <div className="information-panel">
+              <div className="information-grid">
+                <div className="information-cell">
+                  <h4>Reseñas en TapeBeat</h4>
+                  <p>{tapebeatCount}</p>
+                </div>
+                <div className="information-cell">
+                  <h4>Reseñas en TapeFlix</h4>
+                  <p>{tapeflixCount}</p>
+                </div>
+                <div className="information-cell">
+                  <h4>Total de reseñas</h4>
+                  <p>{totalCount}</p>
+                </div>
+                <div className="information-cell">
+                  <h4>Reseña destacada</h4>
+                  <p className={profile.mostLikedReviewTitle ? '' : 'information-cell__empty'}>
+                    {profile.mostLikedReviewTitle || 'Todavía sin reseñas'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {profile.mostLikedReviewTitle && (
+            <section className="section-block">
+              <h2 className="subsection-title">Reseña con más me gusta</h2>
+              <div className="feed-review">
+                <p className="feed-review__title">“{profile.mostLikedReviewTitle}”</p>
+                <p className="feed-review__body">La reseña más votada por la comunidad de este usuario.</p>
+              </div>
+            </section>
+          )}
+        </div>
+
+        <aside className="entity-sidebar">
+          <div className="entity-sidebar__actions">
+            <div className="entity-sidebar__share">
+              <button type="button" onClick={copyLink}>
+                {linkCopied ? 'Copiado ✓' : 'Copiar enlace'}
+              </button>
+              <a href={twitterShareUrl} target="_blank" rel="noreferrer">
+                Compartir en X
+              </a>
+            </div>
+          </div>
+
+          <div className="entity-sidebar__panel">
+            <h3>Reseñas por app</h3>
+            <div className="rating-distribution">
+              {[
+                { label: 'TapeBeat', count: tapebeatCount },
+                { label: 'TapeFlix', count: tapeflixCount },
+              ].map((row) => (
+                <div key={row.label} className="rating-distribution__bar-row">
+                  <span className="rating-distribution__label">{row.label}</span>
+                  <span className="rating-distribution__track">
+                    <span
+                      className="rating-distribution__fill"
+                      style={{ width: `${(row.count / maxAppCount) * 100}%` }}
+                    />
+                  </span>
+                  <span>{row.count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </aside>
+      </div>
     </main>
   );
 }

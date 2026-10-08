@@ -4538,6 +4538,30 @@ button.tracklist-item {
   border-radius: 8px;
 }
 
+/* ===== Perfil público: texto del hero y etiquetas de barras por app ===== */
+.user-profile__hero-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.user-profile__hero-text .eyebrow {
+  margin: 0;
+}
+
+.user-profile__hero-text .user-menu__email {
+  margin: 0;
+}
+
+.rating-distribution__label {
+  flex: none;
+  min-width: 62px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
 @media (max-width: 720px) {
   .skeleton--detail-cover,
   .skeleton--hero-cover {
