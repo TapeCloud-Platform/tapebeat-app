@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { findContentByExternalId, registerContent } from '../api';
 import { getAlbumDetail } from '../discoverApi';
-import { SkeletonCatalogGrid } from './Skeleton';
+import { SkeletonAlbumDetail } from './Skeleton';
 import ReviewPanel from './ReviewPanel';
 import StarRating from './StarRating';
 
@@ -115,9 +115,7 @@ export default function AlbumDetailPage({ sessionUser, onLoginClick }) {
   if (loading) {
     return (
       <main className="app-main">
-        <div className="detail-page">
-          <SkeletonCatalogGrid count={4} />
-        </div>
+        <SkeletonAlbumDetail />
       </main>
     );
   }

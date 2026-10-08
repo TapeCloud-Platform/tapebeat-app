@@ -4,6 +4,7 @@ import { findContentByExternalId, registerContent } from '../api';
 import { getTrackDetail } from '../discoverApi';
 import { abbreviateNumbersInText } from '../utils/format';
 import ReviewPanel from './ReviewPanel';
+import { SkeletonTrackDetail } from './Skeleton';
 
 const SOURCE_APP = 'tapebeat';
 
@@ -102,9 +103,7 @@ export default function TrackDetailPage({ sessionUser, onLoginClick }) {
   if (loading) {
     return (
       <main className="app-main">
-        <div className="detail-page">
-          <h1>Cargando...</h1>
-        </div>
+        <SkeletonTrackDetail />
       </main>
     );
   }

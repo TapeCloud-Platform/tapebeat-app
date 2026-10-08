@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { discover, getProfile } from '../discoverApi';
 import { findContentByExternalId, getReviews, registerContent } from '../api';
-import { SkeletonCatalogGrid } from './Skeleton';
+import { SkeletonArtistDetail } from './Skeleton';
 import ReviewPanel from './ReviewPanel';
 
 const RELEASE_TABS = [
@@ -258,7 +258,7 @@ export default function ArtistPage({ sessionUser, onLoginClick }) {
       {error && <p className="error">{error}</p>}
 
       {loading ? (
-        <SkeletonCatalogGrid count={6} />
+        <SkeletonArtistDetail />
       ) : (
         <>
           <section className="entity-hero">

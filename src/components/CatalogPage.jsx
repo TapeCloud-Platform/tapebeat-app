@@ -5,8 +5,7 @@ import TrackCard from './TrackCard';
 import ArtistCard from './ArtistCard';
 import TopSlider from './TopSlider';
 import FeedReviewCard, { contentPath } from './FeedReviewCard';
-import { SkeletonCatalogGrid } from './Skeleton';
-import LoadingIcon from './LoadingIcon';
+import { SkeletonCatalogHome, SkeletonCatalogResults } from './Skeleton';
 import { getReviews } from '../api';
 
 const VIEW_MODE_KEY = 'tapecloud_catalog_view';
@@ -184,12 +183,11 @@ export default function CatalogPage({
         {error && <p className="error">{error}</p>}
 
         {loading ? (
-          <div className="catalog-loading">
-            <SkeletonCatalogGrid count={10} />
-            <div className="catalog-loading-icon-row">
-              <LoadingIcon size={22} />
-            </div>
-          </div>
+          isFiltered ? (
+            <SkeletonCatalogResults count={10} view={viewMode} />
+          ) : (
+            <SkeletonCatalogHome />
+          )
         ) : isFiltered ? (
           <>
             {artists.length > 0 && (
