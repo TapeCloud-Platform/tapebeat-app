@@ -28,6 +28,15 @@ export default function TrackDetailPage({ sessionUser, onLoginClick }) {
 
   const token = localStorage.getItem('tapecloud_token');
 
+  // Al navegar entre canciones del mismo álbum el componente se reutiliza:
+  // hay que tomar el tema nuevo y soltar el contenido anterior.
+  useEffect(() => {
+    setTrack(location.state?.track || null);
+    setContentId(null);
+    setAlbumDetail(null);
+    setTab('home');
+  }, [trackId]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     let cancelled = false;
 
@@ -40,9 +49,7 @@ export default function TrackDetailPage({ sessionUser, onLoginClick }) {
 
         if (item) {
           setContentId(item.id);
-          if (!track) {
-            setTrack(item);
-          }
+          setTrack((current) => current ?? item);
         }
       } finally {
         if (!cancelled) {
@@ -55,7 +62,7 @@ export default function TrackDetailPage({ sessionUser, onLoginClick }) {
     return () => {
       cancelled = true;
     };
-  }, [trackId, track]);
+  }, [trackId]);
 
   useEffect(() => {
     const artist = track?.subtitle || track?.genre;
@@ -88,6 +95,29 @@ export default function TrackDetailPage({ sessionUser, onLoginClick }) {
       return;
     }
     setTab('reviews');
+  }
+
+  function openTrack(name) {
+    if (!track || name.toLowerCase() === track.title.toLowerCase()) {
+      return;
+    }
+    const nextId = `${artistOf(track)}-${name}`;
+    navigate(`/track/${encodeURIComponent(nextId)}`, {
+      state: {
+        track: {
+          externalId: nextId,
+          title: name,
+          subtitle: artistOf(track),
+          genre: artistOf(track),
+          description: artistOf(track),
+          imageUrl: track.imageUrl || albumDetail?.albumImageUrl || '',
+        },
+      },
+    });
+  }
+
+  function artistOf(item) {
+    return item?.subtitle || item?.genre || '';
   }
 
   function copyLink() {
@@ -358,15 +388,18 @@ export default function TrackDetailPage({ sessionUser, onLoginClick }) {
                 <h3>Canciones del álbum</h3>
                 <div className="tracklist">
                   {albumDetail.albumTracks.map((name, index) => (
-                    <div
+                    <button
                       key={`${name}-${index}`}
-                      className={`tracklist-item ${
+                      type="button"
+                      title={`Abrir "${name}"`}
+                      className={`tracklist-item tracklist-item--clickable ${
                         name.toLowerCase() === track.title.toLowerCase() ? 'is-current' : ''
                       }`}
+                      onClick={() => openTrack(name)}
                     >
                       <span className="tracklist-item__index">{index + 1}</span>
                       <span className="tracklist-item__name">{name}</span>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
