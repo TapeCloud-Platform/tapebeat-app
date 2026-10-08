@@ -4,6 +4,7 @@ import { discover, getProfile } from '../discoverApi';
 import { findContentByExternalId, getReviews, registerContent } from '../api';
 import { SkeletonArtistDetail } from './Skeleton';
 import ReviewPanel from './ReviewPanel';
+import { LockIcon } from './icons';
 
 const RELEASE_TABS = [
   { value: 'album', label: 'Álbumes' },
@@ -310,7 +311,13 @@ export default function ArtistPage({ sessionUser, onLoginClick }) {
 
               {!(sessionUser && artistStats.yourRating != null) && (
                 <button type="button" className="entity-hero__cta" onClick={handleRateArtistClick}>
-                  {sessionUser ? '★ Calificar este artista' : '🔒 Iniciá sesión para calificar'}
+                  {sessionUser ? (
+                    '★ Calificar este artista'
+                  ) : (
+                    <>
+                      <LockIcon size={15} /> Iniciá sesión para calificar
+                    </>
+                  )}
                 </button>
               )}
             </div>

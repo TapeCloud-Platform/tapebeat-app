@@ -5,6 +5,7 @@ import { getAlbumDetail } from '../discoverApi';
 import { SkeletonAlbumDetail } from './Skeleton';
 import ReviewPanel from './ReviewPanel';
 import StarRating from './StarRating';
+import { LockIcon } from './icons';
 
 const SOURCE_APP = 'tapebeat';
 const SOURCE_TYPE = 'album';
@@ -214,7 +215,13 @@ export default function AlbumDetailPage({ sessionUser, onLoginClick }) {
 
             {!(sessionUser && reviewStats.yourRating != null) && (
               <button type="button" className="entity-hero__cta" onClick={handleRateClick}>
-                {sessionUser ? '★ Calificar este álbum' : '🔒 Iniciá sesión para calificar'}
+                {sessionUser ? (
+                  '★ Calificar este álbum'
+                ) : (
+                  <>
+                    <LockIcon size={15} /> Iniciá sesión para calificar
+                  </>
+                )}
               </button>
             )}
           </div>

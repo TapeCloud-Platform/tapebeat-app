@@ -5,6 +5,7 @@ import { getTrackDetail } from '../discoverApi';
 import { abbreviateNumbersInText } from '../utils/format';
 import ReviewPanel from './ReviewPanel';
 import { SkeletonTrackDetail } from './Skeleton';
+import { LockIcon } from './icons';
 
 const SOURCE_APP = 'tapebeat';
 
@@ -220,7 +221,13 @@ export default function TrackDetailPage({ sessionUser, onLoginClick }) {
 
             {!(sessionUser && reviewStats.yourRating != null) && (
               <button type="button" className="entity-hero__cta" onClick={handleRateClick}>
-                {sessionUser ? '★ Calificar esta canción' : '🔒 Iniciá sesión para calificar'}
+                {sessionUser ? (
+                  '★ Calificar esta canción'
+                ) : (
+                  <>
+                    <LockIcon size={15} /> Iniciá sesión para calificar
+                  </>
+                )}
               </button>
             )}
           </div>

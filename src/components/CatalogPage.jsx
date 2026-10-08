@@ -12,6 +12,7 @@ import { getReviews } from '../api';
 const VIEW_MODE_KEY = 'tapecloud_catalog_view';
 const RECENTLY_REVIEWED_LIMIT = 18;
 const TRENDING_REVIEWS_LIMIT = 5;
+const PAGE_SIZE = 20;
 const POPULAR_REVIEWERS_LIMIT = 8;
 
 function getStoredViewMode() {
@@ -44,6 +45,13 @@ export default function CatalogPage({
     setViewMode(mode);
     localStorage.setItem(VIEW_MODE_KEY, mode);
   }
+
+  // Resultados filtrados: de a 20 con botón Ver más.
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [items]);
 
   // El feed de reseñas de toda la app solo hace falta en el inicio.
   useEffect(() => {
@@ -210,10 +218,20 @@ export default function CatalogPage({
             )}
 
             <div className={viewMode === 'list' ? 'cards-list' : 'cards-grid'}>
-              {tracks.map((track) => (
+              {tracks.slice(0, visibleCount).map((track) => (
                 <TrackCard key={track.id} track={track} variant={viewMode === 'list' ? 'list' : undefined} />
               ))}
             </div>
+
+            {visibleCount < tracks.length && (
+              <button
+                type="button"
+                className="load-more-btn"
+                onClick={() => setVisibleCount((value) => value + PAGE_SIZE)}
+              >
+                Ver más ({tracks.length - visibleCount} restantes)
+              </button>
+            )}
           </>
         ) : (
           <>
