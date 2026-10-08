@@ -237,10 +237,6 @@ export default function CatalogPage({
           <>
             <TopSlider title="Populares esta semana" tracks={hero} />
 
-            {homeGenres.map((genre) => (
-              <GenreRow key={genre.value} genre={genre} />
-            ))}
-
             {recentlyReviewed.length > 0 && (
               <div className="reviewed-block">
                 <div className="section-header">
@@ -264,6 +260,10 @@ export default function CatalogPage({
                 </div>
               </div>
             )}
+
+            {homeGenres.map((genre) => (
+              <GenreRow key={genre.value} genre={genre} />
+            ))}
 
             <div className="split-section">
               <div className="split-col">
