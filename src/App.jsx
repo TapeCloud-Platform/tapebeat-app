@@ -244,7 +244,7 @@ function AppShell({ sessionUser, onLogout, onLoginClick, theme, onThemeChange })
           path="/artist/:artistName"
           element={<ArtistPage sessionUser={sessionUser} onLoginClick={onLoginClick} />}
         />
-        <Route path="/album/:artist/:albumName" element={<AlbumDetailPage />} />
+        <Route path="/album/:artist/:albumName" element={<AlbumDetailPage sessionUser={sessionUser} onLoginClick={onLoginClick} />} />
         <Route path="/user/:username" element={<UserProfilePage />} />
         <Route path="/" element={<Navigate to="/catalog" replace />} />
       </Routes>

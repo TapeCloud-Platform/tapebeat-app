@@ -4319,3 +4319,123 @@ body {
   object-fit: contain;
   padding: 6px;
 }
+
+/* ===== Ficha de álbum estilo Musicboard: tracklist + estadística de rating ===== */
+.tracklist-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.tracklist-header__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.tracklist-toggle {
+  flex: none;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-bg);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tracklist-toggle:hover {
+  color: var(--ink);
+  background: var(--surface-bg-strong);
+  border-color: var(--accent);
+}
+
+button.tracklist-item {
+  width: 100%;
+  border: 1px solid transparent;
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  align-items: center;
+}
+
+.tracklist-item--clickable:hover {
+  background: var(--surface-bg);
+  border-color: var(--border-softer);
+}
+
+.tracklist--rich .tracklist-item {
+  padding: 10px 10px;
+}
+
+.tracklist-item__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.tracklist-item__artist {
+  font-size: 0.74rem;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tracklist-item__chevron {
+  flex: none;
+  color: var(--text-disabled);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.tracklist-item--clickable:hover .tracklist-item__chevron {
+  color: var(--accent);
+  transform: translateX(2px);
+}
+
+.tracklist--mini {
+  max-height: 260px;
+}
+
+.rating-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.rating-summary__value {
+  font-size: 1.05rem;
+  color: var(--ink);
+}
+
+.rating-summary__count {
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+}
+
+.rating-summary__cta {
+  margin-left: auto;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rating-summary__cta:hover {
+  background: var(--surface-bg);
+}
